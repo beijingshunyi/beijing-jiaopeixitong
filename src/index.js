@@ -21,17 +21,6 @@ const app = new Hono();
 // 中间件配置
 app.use('*', cors());
 
-// 根路径
-app.get('/', (c) => {
-  return c.json({
-    message: '教培系统后端API',
-    version: '1.0.0',
-    health: '/health',
-    api: '/api',
-    documentation: '请参考API文档使用各端点'
-  });
-});
-
 // 健康检查
 app.get('/health', (c) => {
   return c.json({ status: 'ok', message: '服务运行正常' });
