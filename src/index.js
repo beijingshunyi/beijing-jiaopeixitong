@@ -564,7 +564,41 @@ try {
         
         <!-- 内容区域 -->
         <div class="content">
-            <!-- 仪表盘 -->
+            <!-- 标签页内容将通过JavaScript动态显示 -->
+            
+            <!-- 版权信息 -->
+            <div class="copyright">
+                <div class="copyright-content">
+                    <div class="copyright-header">
+                        <h3>北京青翎舞蹈艺术中心</h3>
+                        <p>由北京青翎文化传播有限公司全资所有并运营</p>
+                    </div>
+                    <div class="copyright-info">
+                        <div class="info-item">
+                            <h4>业务范围</h4>
+                            <p>专业成人舞蹈艺术教育 · 商业演出策划 · 企业年会编排</p>
+                        </div>
+                        <div class="info-item">
+                            <h4>联系我们</h4>
+                            <p>联系电话：15011258120<br>投诉举报：18363070253</p>
+                        </div>
+                        <div class="info-item">
+                            <h4>机构地址</h4>
+                            <p>北京市东城区崇文门北京商界A座8楼818</p>
+                        </div>
+                    </div>
+                    <div class="copyright-footer">
+                        <p>&copy; 2025 北京青翎文化传播有限公司 版权所有 All Rights Reserved</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 标签页内容 -->
+    <div class="tab-content">
+        <!-- 首页仪表盘 -->
+        <div id="dashboard" class="tab-pane active">
             <div class="dashboard">
                 <h3>系统概览</h3>
                 <div class="stats-grid">
@@ -587,7 +621,6 @@ try {
                 </div>
             </div>
             
-            <!-- API接口信息 -->
             <div class="api-section">
                 <h3>API接口信息</h3>
                 <div class="api-info">
@@ -623,49 +656,143 @@ try {
                     </div>
                 </div>
             </div>
-            
-            <!-- 版权信息 -->
-            <div class="copyright">
-                <div class="copyright-content">
-                    <div class="copyright-header">
-                        <h3>北京青翎舞蹈艺术中心</h3>
-                        <p>由北京青翎文化传播有限公司全资所有并运营</p>
-                    </div>
-                    <div class="copyright-info">
-                        <div class="info-item">
-                            <h4>业务范围</h4>
-                            <p>专业成人舞蹈艺术教育 · 商业演出策划 · 企业年会编排</p>
-                        </div>
-                        <div class="info-item">
-                            <h4>联系我们</h4>
-                            <p>联系电话：15011258120<br>投诉举报：18363070253</p>
-                        </div>
-                        <div class="info-item">
-                            <h4>机构地址</h4>
-                            <p>北京市东城区崇文门北京商界A座8楼818</p>
-                        </div>
-                    </div>
-                    <div class="copyright-footer">
-                        <p>&copy; 2025 北京青翎文化传播有限公司 版权所有 All Rights Reserved</p>
-                    </div>
+        </div>
+        
+        <!-- 学员管理 -->
+        <div id="students" class="tab-pane">
+            <div class="dashboard">
+                <h3>学员管理</h3>
+                <div class="api-section">
+                    <p>学员管理功能开发中...</p>
+                    <p>即将支持：学员信息管理、报名管理、课程分配等功能</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 课程管理 -->
+        <div id="courses" class="tab-pane">
+            <div class="dashboard">
+                <h3>课程管理</h3>
+                <div class="api-section">
+                    <p>课程管理功能开发中...</p>
+                    <p>即将支持：课程创建、编辑、排课、课程材料管理等功能</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 考勤管理 -->
+        <div id="attendance" class="tab-pane">
+            <div class="dashboard">
+                <h3>考勤管理</h3>
+                <div class="api-section">
+                    <p>考勤管理功能开发中...</p>
+                    <p>即将支持：学员打卡、考勤统计、请假管理等功能</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 财务管理 -->
+        <div id="finance" class="tab-pane">
+            <div class="dashboard">
+                <h3>财务管理</h3>
+                <div class="api-section">
+                    <p>财务管理功能开发中...</p>
+                    <p>即将支持：收费管理、费用统计、财务报表等功能</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 统计报表 -->
+        <div id="reports" class="tab-pane">
+            <div class="dashboard">
+                <h3>统计报表</h3>
+                <div class="api-section">
+                    <p>统计报表功能开发中...</p>
+                    <p>即将支持：学员统计、课程统计、收入统计等功能</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 系统设置 -->
+        <div id="settings" class="tab-pane">
+            <div class="dashboard">
+                <h3>系统设置</h3>
+                <div class="api-section">
+                    <p>系统设置功能开发中...</p>
+                    <p>即将支持：用户管理、角色权限、系统配置等功能</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API测试工具 -->
+        <div id="api-test" class="tab-pane">
+            <div class="dashboard">
+                <h3>API测试工具</h3>
+                <div class="api-section">
+                    <p>API测试工具功能开发中...</p>
+                    <p>即将支持：API接口测试、请求模拟、响应查看等功能</p>
                 </div>
             </div>
         </div>
     </div>
     
     <script>
+        // 添加标签页样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .tab-content {
+                margin-top: 30px;
+            }
+            
+            .tab-pane {
+                display: none;
+            }
+            
+            .tab-pane.active {
+                display: block;
+            }
+        `;
+        document.head.appendChild(style);
+        
         // 导航菜单切换
-        document.querySelectorAll('.nav-menu a').forEach(link => {
+        const navLinks = document.querySelectorAll('.nav-menu a');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        // 导航菜单与标签页的映射
+        const navToTabMap = {
+            '首页仪表盘': 'dashboard',
+            '学员管理': 'students',
+            '课程管理': 'courses',
+            '考勤管理': 'attendance',
+            '财务管理': 'finance',
+            '统计报表': 'reports',
+            '系统设置': 'settings',
+            'API测试工具': 'api-test'
+        };
+        
+        navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 
                 // 移除所有活动状态
-                document.querySelectorAll('.nav-menu a').forEach(item => {
+                navLinks.forEach(item => {
                     item.classList.remove('active');
+                });
+                tabPanes.forEach(pane => {
+                    pane.classList.remove('active');
                 });
                 
                 // 添加当前活动状态
                 this.classList.add('active');
+                
+                // 显示对应的标签页
+                const tabId = navToTabMap[this.textContent.trim()];
+                if (tabId) {
+                    const targetPane = document.getElementById(tabId);
+                    if (targetPane) {
+                        targetPane.classList.add('active');
+                    }
+                }
             });
         });
     </script>
