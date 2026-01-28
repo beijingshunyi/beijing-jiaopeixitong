@@ -33,8 +33,15 @@ app.get('/health', (c) => {
 
 // 注册路由
 try {
+  console.log('Registering routes...');
+  console.log('Routes object:', routes);
   app.route('/api', routes);
   console.log('Routes registered successfully');
+  // 测试直接注册一个路由
+  app.post('/test/login', (c) => {
+    return c.json({ test: 'login route works' });
+  });
+  console.log('Test route added');
 } catch (error) {
   console.error('Error registering routes:', error);
   // 即使路由注册失败，也要确保服务能够启动
