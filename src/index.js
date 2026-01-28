@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import routes from './routes/index.js';
+import authController from './controllers/auth.js';
 
 // 添加环境变量检查
 console.log('Environment variables loaded:', {
@@ -37,6 +38,18 @@ try {
   console.log('Routes object:', routes);
   app.route('/api', routes);
   console.log('Routes registered successfully');
+  
+  // 直接注册认证路由到主应用
+  console.log('Adding direct auth routes...');
+  app.post('/api/auth/register', authController.register);
+  app.post('/api/auth/login', authController.login);
+  app.post('/api/auth/refresh', authController.refreshToken);
+  app.post('/api/auth/logout', authController.logout);
+  app.get('/api/auth/me', (c) => {
+    return c.json({ error: '未提供认证令牌' }, 401);
+  });
+  console.log('Direct auth routes added');
+  
   // 测试直接注册一个路由
   app.post('/test/login', (c) => {
     return c.json({ test: 'login route works' });
