@@ -179,381 +179,78 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>北京青翎舞蹈艺术中心 - 管理系统</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-        
-        /* 侧边栏 */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100vh;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 30px 0;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-        }
-        
-        .sidebar-header {
-            text-align: center;
-            padding: 0 20px 30px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .sidebar-header h1 {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #ffffff;
-        }
-        
-        .sidebar-header p {
-            font-size: 14px;
-            opacity: 0.8;
-            color: #ecf0f1;
-        }
-        
-        .nav-menu {
-            list-style: none;
-            margin-top: 30px;
-        }
-        
-        .nav-menu li {
-            margin-bottom: 5px;
-        }
-        
-        .nav-menu a {
-            display: block;
-            padding: 15px 30px;
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 15px;
-            border-left: 3px solid transparent;
-        }
-        
-        .nav-menu a:hover {
-            background-color: rgba(255,255,255,0.1);
-            color: white;
-            border-left-color: #3498db;
-            transform: translateX(5px);
-        }
-        
-        .nav-menu a.active {
-            background-color: rgba(52,152,219,0.2);
-            color: white;
-            border-left-color: #3498db;
-        }
-        
-        /* 主内容区 */
-        .main-content {
-            margin-left: 260px;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-        }
-        
-        /* 顶部导航 */
-        .top-nav {
-            background-color: white;
-            padding: 20px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .top-nav h2 {
-            font-size: 24px;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .user-info span {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .user-info button {
-            padding: 8px 16px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        
-        .user-info button:hover {
-            background-color: #2980b9;
-        }
-        
-        /* 内容区域 */
-        .content {
-            padding: 30px;
-        }
-        
-        /* 仪表盘 */
-        .dashboard {
-            margin-bottom: 30px;
-        }
-        
-        .dashboard h3 {
-            font-size: 18px;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            border-top: 4px solid #3498db;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-        
-        .stat-card h4 {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-bottom: 15px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .stat-card p {
-            font-size: 32px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-        
-        .stat-card.dance {
-            border-top-color: #e74c3c;
-        }
-        
-        .stat-card.course {
-            border-top-color: #2ecc71;
-        }
-        
-        .stat-card.attendance {
-            border-top-color: #f39c12;
-        }
-        
-        .stat-card.revenue {
-            border-top-color: #9b59b6;
-        }
-        
-        /* API部分 */
-        .api-section {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        
-        .api-section h3 {
-            font-size: 18px;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        
-        .api-info {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #3498db;
-            margin-bottom: 25px;
-        }
-        
-        .api-info h4 {
-            font-size: 16px;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        
-        .api-info p {
-            font-size: 14px;
-            color: #6c757d;
-            margin-bottom: 8px;
-        }
-        
-        .api-endpoints {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-        }
-        
-        .endpoint-card {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 3px solid #3498db;
-            transition: all 0.3s ease;
-        }
-        
-        .endpoint-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-        
-        .endpoint-card h5 {
-            font-size: 14px;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        
-        .endpoint-card p {
-            font-size: 13px;
-            color: #6c757d;
-        }
-        
-        /* 版权信息 */
-        .copyright {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 40px 30px;
-            margin-top: 40px;
-        }
-        
-        .copyright-content {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .copyright-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .copyright-header h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #ffffff;
-        }
-        
-        .copyright-header p {
-            font-size: 14px;
-            opacity: 0.8;
-            color: #ecf0f1;
-        }
-        
-        .copyright-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        
-        .info-item h4 {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #3498db;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .info-item p {
-            font-size: 14px;
-            line-height: 1.6;
-            opacity: 0.8;
-            color: #ecf0f1;
-        }
-        
-        .copyright-footer {
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .copyright-footer p {
-            font-size: 13px;
-            opacity: 0.7;
-            color: #bdc3c7;
-        }
-        
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 200px;
-            }
-            
-            .main-content {
-                margin-left: 200px;
-            }
-            
-            .top-nav {
-                padding: 15px 20px;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f8f9fa; color: #333; }
+        .sidebar { position: fixed; left: 0; top: 0; width: 250px; height: 100vh; background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 20px 0; z-index: 1000; }
+        .sidebar-header { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h1 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .sidebar-header p { font-size: 14px; opacity: 0.8; }
+        .nav-menu { list-style: none; margin-top: 20px; }
+        .nav-menu li { margin-bottom: 5px; }
+        .nav-menu a { display: block; padding: 12px 20px; color: rgba(255,255,255,0.8); text-decoration: none; transition: all 0.3s ease; font-size: 14px; border-left: 3px solid transparent; }
+        .nav-menu a:hover { background: rgba(255,255,255,0.1); color: white; border-left-color: #3498db; transform: translateX(5px); }
+        .nav-menu a.active { background: rgba(52,152,219,0.2); color: white; border-left-color: #3498db; }
+        .main-content { margin-left: 250px; min-height: 100vh; background: #f8f9fa; }
+        .top-nav { background: white; padding: 15px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .top-nav h2 { font-size: 20px; color: #2c3e50; font-weight: 600; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-info span { color: #666; font-size: 14px; }
+        .user-info button { padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
+        .content { padding: 20px; }
+        .dashboard { margin-bottom: 20px; }
+        .dashboard h3 { font-size: 16px; color: #2c3e50; margin-bottom: 15px; font-weight: 600; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 3px solid #3498db; }
+        .stat-card h4 { font-size: 13px; color: #7f8c8d; margin-bottom: 10px; text-transform: uppercase; }
+        .stat-card p { font-size: 24px; font-weight: 700; color: #2c3e50; }
+        .stat-card.dance { border-top-color: #e74c3c; }
+        .stat-card.course { border-top-color: #2ecc71; }
+        .stat-card.attendance { border-top-color: #f39c12; }
+        .stat-card.revenue { border-top-color: #9b59b6; }
+        .api-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .api-section h3 { font-size: 16px; color: #2c3e50; margin-bottom: 15px; font-weight: 600; }
+        .api-info { background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 3px solid #3498db; margin-bottom: 20px; }
+        .api-info h4 { font-size: 14px; color: #2c3e50; margin-bottom: 8px; }
+        .api-info p { font-size: 13px; color: #6c757d; margin-bottom: 6px; }
+        .api-endpoints { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+        .endpoint-card { background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 3px solid #3498db; }
+        .endpoint-card h5 { font-size: 13px; color: #2c3e50; margin-bottom: 6px; font-weight: 600; }
+        .endpoint-card p { font-size: 12px; color: #6c757d; }
+        .copyright { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 30px 20px; margin-top: 30px; }
+        .copyright-content { max-width: 1000px; margin: 0 auto; }
+        .copyright-header { text-align: center; margin-bottom: 20px; }
+        .copyright-header h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+        .copyright-header p { font-size: 13px; opacity: 0.8; }
+        .copyright-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .info-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #3498db; text-transform: uppercase; }
+        .info-item p { font-size: 13px; line-height: 1.5; opacity: 0.8; }
+        .copyright-footer { text-align: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .copyright-footer p { font-size: 12px; opacity: 0.7; }
+        .tab-content { margin-bottom: 20px; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        @media (max-width: 768px) { .sidebar { width: 200px; } .main-content { margin-left: 200px; } .content { padding: 15px; } .stats-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <!-- 侧边栏 -->
     <div class="sidebar">
         <div class="sidebar-header">
             <h1>北京青翎舞蹈艺术中心</h1>
             <p>管理系统</p>
         </div>
         <ul class="nav-menu">
-            <li><a href="#" class="active">首页仪表盘</a></li>
-            <li><a href="#">学员管理</a></li>
-            <li><a href="#">课程管理</a></li>
-            <li><a href="#">考勤管理</a></li>
-            <li><a href="#">财务管理</a></li>
-            <li><a href="#">统计报表</a></li>
-            <li><a href="#">系统设置</a></li>
-            <li><a href="#">API测试工具</a></li>
+            <li><a href="#" class="active" data-tab="dashboard">首页仪表盘</a></li>
+            <li><a href="#" data-tab="students">学员管理</a></li>
+            <li><a href="#" data-tab="courses">课程管理</a></li>
+            <li><a href="#" data-tab="attendance">考勤管理</a></li>
+            <li><a href="#" data-tab="finance">财务管理</a></li>
+            <li><a href="#" data-tab="reports">统计报表</a></li>
+            <li><a href="#" data-tab="settings">系统设置</a></li>
+            <li><a href="#" data-tab="api-test">API测试工具</a></li>
         </ul>
     </div>
     
-    <!-- 主内容区 -->
     <div class="main-content">
-        <!-- 顶部导航 -->
         <div class="top-nav">
             <h2>北京青翎舞蹈艺术中心</h2>
             <div class="user-info">
@@ -562,11 +259,8 @@ try {
             </div>
         </div>
         
-        <!-- 内容区域 -->
         <div class="content">
-            <!-- 标签页内容 -->
             <div class="tab-content">
-                <!-- 首页仪表盘 -->
                 <div id="dashboard" class="tab-pane active">
                     <div class="dashboard">
                         <h3>系统概览</h3>
@@ -627,85 +321,63 @@ try {
                     </div>
                 </div>
                 
-                <!-- 学员管理 -->
                 <div id="students" class="tab-pane">
-                    <div class="dashboard">
+                    <div class="api-section">
                         <h3>学员管理</h3>
-                        <div class="api-section">
-                            <p>学员管理功能开发中...</p>
-                            <p>即将支持：学员信息管理、报名管理、课程分配等功能</p>
-                        </div>
+                        <p>学员管理功能开发中...</p>
+                        <p>即将支持：学员信息管理、报名管理、课程分配等功能</p>
                     </div>
                 </div>
                 
-                <!-- 课程管理 -->
                 <div id="courses" class="tab-pane">
-                    <div class="dashboard">
+                    <div class="api-section">
                         <h3>课程管理</h3>
-                        <div class="api-section">
-                            <p>课程管理功能开发中...</p>
-                            <p>即将支持：课程创建、编辑、排课、课程材料管理等功能</p>
-                        </div>
+                        <p>课程管理功能开发中...</p>
+                        <p>即将支持：课程创建、编辑、排课、课程材料管理等功能</p>
                     </div>
                 </div>
                 
-                <!-- 考勤管理 -->
                 <div id="attendance" class="tab-pane">
-                    <div class="dashboard">
+                    <div class="api-section">
                         <h3>考勤管理</h3>
-                        <div class="api-section">
-                            <p>考勤管理功能开发中...</p>
-                            <p>即将支持：学员打卡、考勤统计、请假管理等功能</p>
-                        </div>
+                        <p>考勤管理功能开发中...</p>
+                        <p>即将支持：学员打卡、考勤统计、请假管理等功能</p>
                     </div>
                 </div>
                 
-                <!-- 财务管理 -->
                 <div id="finance" class="tab-pane">
-                    <div class="dashboard">
+                    <div class="api-section">
                         <h3>财务管理</h3>
-                        <div class="api-section">
-                            <p>财务管理功能开发中...</p>
-                            <p>即将支持：收费管理、费用统计、财务报表等功能</p>
-                        </div>
+                        <p>财务管理功能开发中...</p>
+                        <p>即将支持：收费管理、费用统计、财务报表等功能</p>
                     </div>
                 </div>
                 
-                <!-- 统计报表 -->
                 <div id="reports" class="tab-pane">
-                    <div class="dashboard">
+                    <div class="api-section">
                         <h3>统计报表</h3>
-                        <div class="api-section">
-                            <p>统计报表功能开发中...</p>
-                            <p>即将支持：学员统计、课程统计、收入统计等功能</p>
-                        </div>
+                        <p>统计报表功能开发中...</p>
+                        <p>即将支持：学员统计、课程统计、收入统计等功能</p>
                     </div>
                 </div>
                 
-                <!-- 系统设置 -->
                 <div id="settings" class="tab-pane">
-                    <div class="dashboard">
+                    <div class="api-section">
                         <h3>系统设置</h3>
-                        <div class="api-section">
-                            <p>系统设置功能开发中...</p>
-                            <p>即将支持：用户管理、角色权限、系统配置等功能</p>
-                        </div>
+                        <p>系统设置功能开发中...</p>
+                        <p>即将支持：用户管理、角色权限、系统配置等功能</p>
                     </div>
                 </div>
                 
-                <!-- API测试工具 -->
                 <div id="api-test" class="tab-pane">
-                    <div class="dashboard">
+                    <div class="api-section">
                         <h3>API测试工具</h3>
-                        <div class="api-section">
-                            <p>API测试工具功能开发中...</p>
-                            <p>即将支持：API接口测试、请求模拟、响应查看等功能</p>
-                        </div>
+                        <p>API测试工具功能开发中...</p>
+                        <p>即将支持：API接口测试、请求模拟、响应查看等功能</p>
                     </div>
                 </div>
             </div>
             
-            <!-- 版权信息 -->
             <div class="copyright">
                 <div class="copyright-content">
                     <div class="copyright-header">
@@ -735,56 +407,19 @@ try {
     </div>
     
     <script>
-        // 添加标签页样式
-        const style = document.createElement('style');
-        style.textContent = `
-            .tab-content {
-                margin-top: 30px;
-            }
-            
-            .tab-pane {
-                display: none;
-            }
-            
-            .tab-pane.active {
-                display: block;
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // 导航菜单切换
-        const navLinks = document.querySelectorAll('.nav-menu a');
-        const tabPanes = document.querySelectorAll('.tab-pane');
-        
-        // 导航菜单与标签页的映射
-        const navToTabMap = {
-            '首页仪表盘': 'dashboard',
-            '学员管理': 'students',
-            '课程管理': 'courses',
-            '考勤管理': 'attendance',
-            '财务管理': 'finance',
-            '统计报表': 'reports',
-            '系统设置': 'settings',
-            'API测试工具': 'api-test'
-        };
-        
-        navLinks.forEach(link => {
+        document.querySelectorAll('.nav-menu a').forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // 移除所有活动状态
-                navLinks.forEach(item => {
+                document.querySelectorAll('.nav-menu a').forEach(item => {
                     item.classList.remove('active');
                 });
-                tabPanes.forEach(pane => {
+                document.querySelectorAll('.tab-pane').forEach(pane => {
                     pane.classList.remove('active');
                 });
                 
-                // 添加当前活动状态
                 this.classList.add('active');
-                
-                // 显示对应的标签页
-                const tabId = navToTabMap[this.textContent.trim()];
+                const tabId = this.getAttribute('data-tab');
                 if (tabId) {
                     const targetPane = document.getElementById(tabId);
                     if (targetPane) {
@@ -799,6 +434,7 @@ try {
       );
     });
     console.log('Admin panel added');
+
 
 
 } catch (error) {
