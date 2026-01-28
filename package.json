@@ -1,0 +1,33 @@
+{
+  "name": "jiaopeifuwuqi",
+  "version": "1.0.0",
+  "description": "教培系统后端API",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js",
+    "deploy": "wrangler deploy",
+    "build": "echo \"No build step needed\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "education",
+    "backend",
+    "api",
+    "supabase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "hono": "^4.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "wrangler": "^3.22.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
