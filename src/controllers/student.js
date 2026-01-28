@@ -424,6 +424,160 @@ const changePassword = async (c) => {
   }
 };
 
+// 打卡功能
+const checkIn = async (c) => {
+  try {
+    const studentId = c.get('userProfile').id;
+    const { courseId, location, deviceInfo } = await c.req.json();
+
+    // 1. 验证课程是否存在且学生已报名
+    const { data: courseSelection, error: selectionError } = await supabaseService
+      .from('course_selections')
+      .select('id, courses(id, name, hours)')
+      .eq('student_id', studentId)
+      .eq('course_id', courseId)
+      .eq('status', 'enrolled')
+      .single();
+
+    if (selectionError || !courseSelection) {
+      throw new Error('未报名该课程');
+    }
+
+    // 2. 检查今天是否已经打卡
+    const today = new Date().toISOString().split('T')[0];
+    const { data: existingCheckIn, error: checkInError } = await supabaseService
+      .from('attendance')
+      .select('id')
+      .eq('student_id', studentId)
+      .eq('course_id', courseId)
+      .eq('date', today)
+      .single();
+
+    if (existingCheckIn) {
+      throw new Error('今日已打卡');
+    }
+
+    // 3. 执行打卡
+    const { data: checkInRecord, error: createError } = await supabaseService
+      .from('attendance')
+      .insert({
+        student_id: studentId,
+        course_id: courseId,
+        date: today,
+        time: new Date().toISOString(),
+        status: 'present',
+        location,
+        device_info: deviceInfo
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      throw new Error('打卡失败');
+    }
+
+    // 4. 扣除课时（简化版：每次打卡扣除1课时）
+    const { error: updateError } = await supabaseService
+      .from('course_selections')
+      .update({
+        remaining_hours: (courseSelection.remaining_hours || courseSelection.courses.hours) - 1
+      })
+      .eq('id', courseSelection.id);
+
+    if (updateError) {
+      console.error('扣除课时失败:', updateError);
+      // 课时扣除失败不影响打卡结果
+    }
+
+    return c.json({ 
+      success: true, 
+      message: '打卡成功',
+      checkIn: checkInRecord
+    });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取打卡记录
+const getAttendanceRecords = async (c) => {
+  try {
+    const studentId = c.get('userProfile').id;
+    const { courseId, startDate, endDate } = c.req.query();
+
+    let query = supabaseService
+      .from('attendance')
+      .select(`
+        id,
+        date,
+        time,
+        status,
+        location,
+        courses(name, code)
+      `)
+      .eq('student_id', studentId);
+
+    if (courseId) {
+      query = query.eq('course_id', courseId);
+    }
+
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
+
+    const { data: records, error } = await query.order('date', { ascending: false });
+
+    if (error) {
+      throw new Error('获取打卡记录失败');
+    }
+
+    return c.json({ records });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取课时剩余情况
+const getRemainingHours = async (c) => {
+  try {
+    const studentId = c.get('userProfile').id;
+
+    const { data: courses, error } = await supabaseService
+      .from('course_selections')
+      .select(`
+        id,
+        remaining_hours,
+        courses(
+          name,
+          code,
+          hours
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('status', 'enrolled');
+
+    if (error) {
+      throw new Error('获取课时信息失败');
+    }
+
+    const courseHours = courses.map(course => ({
+      id: course.courses.id,
+      name: course.courses.name,
+      code: course.courses.code,
+      totalHours: course.courses.hours,
+      remainingHours: course.remaining_hours || course.courses.hours
+    }));
+
+    return c.json({ courses: courseHours });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
 export default {
   getDashboard,
   getAvailableCourses,
@@ -436,5 +590,8 @@ export default {
   getTeachingPlan,
   getTrainingProgram,
   updateProfile,
-  changePassword
+  changePassword,
+  checkIn,
+  getAttendanceRecords,
+  getRemainingHours
 };

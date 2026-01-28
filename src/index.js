@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { serveStatic } from 'hono/serve-static';
+import { rateLimit } from 'hono/rate-limit';
 import authController from './controllers/auth.js';
 import studentController from './controllers/student.js';
 import teacherController from './controllers/teacher.js';
@@ -19,6 +21,20 @@ const app = new Hono();
 
 // 中间件配置
 app.use('*', cors());
+
+// 速率限制中间件
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15分钟
+  max: 100, // 每个IP在windowMs时间内最多请求100次
+  message: {
+    error: '请求过于频繁，请稍后再试'
+  },
+  skip: (c) => {
+    // 跳过静态文件的速率限制
+    return c.req.path.startsWith('/static') || c.req.path === '/';
+  }
+});
+app.use('*', limiter);
 
 // 根路径
 app.get('/', (c) => {
@@ -64,22 +80,110 @@ try {
   console.log('Auth routes added');
   
   // 学生路由
-  console.log('Adding student routes...');
-  app.get('/api/student/dashboard', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getDashboard);
-  app.get('/api/student/courses/available', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getAvailableCourses);
-  app.post('/api/student/courses/enroll', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.enrollCourse);
-  app.post('/api/student/courses/drop', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.dropCourse);
-  app.get('/api/student/courses/enrolled', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getEnrolledCourses);
-  app.get('/api/student/grades', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getGrades);
-  app.get('/api/student/schedule', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getSchedule);
-  app.post('/api/student/evaluations', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.submitEvaluation);
-  app.get('/api/student/teaching-plan', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getTeachingPlan);
-  app.get('/api/student/training-program', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getTrainingProgram);
-  app.put('/api/student/profile', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.updateProfile);
-  app.post('/api/student/password', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.changePassword);
-  console.log('Student routes added');
+    console.log('Adding student routes...');
+    app.get('/api/student/dashboard', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getDashboard);
+    app.get('/api/student/courses/available', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getAvailableCourses);
+    app.post('/api/student/courses/enroll', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.enrollCourse);
+    app.post('/api/student/courses/drop', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.dropCourse);
+    app.get('/api/student/courses/enrolled', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getEnrolledCourses);
+    app.get('/api/student/grades', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getGrades);
+    app.get('/api/student/schedule', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getSchedule);
+    app.post('/api/student/evaluations', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.submitEvaluation);
+    app.get('/api/student/teaching-plan', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getTeachingPlan);
+    app.get('/api/student/training-program', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getTrainingProgram);
+    app.put('/api/student/profile', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.updateProfile);
+    app.post('/api/student/password', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.changePassword);
+    // 打卡相关路由
+    app.post('/api/student/checkin', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.checkIn);
+    app.get('/api/student/attendance', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getAttendanceRecords);
+    app.get('/api/student/remaining-hours', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getRemainingHours);
+    console.log('Student routes added');
+    
+    // 教师路由
+    console.log('Adding teacher routes...');
+    app.get('/api/teacher/courses', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.getMyCourses);
+    app.get('/api/teacher/courses/:courseId/students', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.getCourseStudents);
+    app.post('/api/teacher/grades', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.enterGrades);
+    app.get('/api/teacher/courses/:courseId/evaluations', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.getCourseEvaluations);
+    app.get('/api/teacher/schedule', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.getMySchedule);
+    app.get('/api/teacher/courses/:courseId/statistics', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.getGradeStatistics);
+    app.put('/api/teacher/profile', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.updateProfile);
+    app.post('/api/teacher/courses/apply', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.applyForCourse);
+    app.get('/api/teacher/applications', authMiddleware, roleMiddleware([ROLES.TEACHER]), teacherController.getMyApplications);
+    console.log('Teacher routes added');
+    
+    // Staff路由
+    console.log('Adding staff routes...');
+    // 学院管理
+    app.get('/api/staff/colleges', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getColleges);
+    app.post('/api/staff/colleges', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.createCollege);
+    app.put('/api/staff/colleges/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.updateCollege);
+    app.delete('/api/staff/colleges/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.deleteCollege);
+    // 专业管理
+    app.get('/api/staff/majors', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getMajors);
+    app.post('/api/staff/majors', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.createMajor);
+    app.put('/api/staff/majors/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.updateMajor);
+    app.delete('/api/staff/majors/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.deleteMajor);
+    // 班级管理
+    app.get('/api/staff/classes', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getClasses);
+    app.post('/api/staff/classes', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.createClass);
+    app.put('/api/staff/classes/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.updateClass);
+    app.delete('/api/staff/classes/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.deleteClass);
+    // 教学计划管理
+    app.get('/api/staff/teaching-plans', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getTeachingPlans);
+    app.post('/api/staff/teaching-plans', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.createTeachingPlan);
+    app.delete('/api/staff/teaching-plans/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.deleteTeachingPlan);
+    // 培养方案管理
+    app.get('/api/staff/training-programs', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getTrainingPrograms);
+    app.post('/api/staff/training-programs', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.createTrainingProgram);
+    app.put('/api/staff/training-programs/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.updateTrainingProgram);
+    app.delete('/api/staff/training-programs/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.deleteTrainingProgram);
+    // 申请管理
+    app.get('/api/staff/applications', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getApplications);
+    app.put('/api/staff/applications/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.processApplication);
+    // 学生管理
+    app.get('/api/staff/students', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getStudents);
+    // 评价管理
+    app.get('/api/staff/evaluations', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getEvaluations);
+    console.log('Staff routes added');
+    
+    // Admin路由
+    console.log('Adding admin routes...');
+    // 用户管理
+    app.get('/api/admin/users', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getAllUsers);
+    app.post('/api/admin/users', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.createUser);
+    app.put('/api/admin/users/:id', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.updateUser);
+    app.delete('/api/admin/users/:id', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.deleteUser);
+    app.post('/api/admin/users/reset-password', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.resetPassword);
+    // 角色管理
+    app.get('/api/admin/roles', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getAllRoles);
+    app.post('/api/admin/roles', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.createRole);
+    app.put('/api/admin/roles/:id', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.updateRole);
+    app.delete('/api/admin/roles/:id', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.deleteRole);
+    // 权限管理
+    app.get('/api/admin/users/:userId/roles', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getUserRoles);
+    app.post('/api/admin/users/roles', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.assignRole);
+    app.delete('/api/admin/users/roles', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.removeRole);
+    // 系统统计
+    app.get('/api/admin/stats', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getSystemStats);
+    console.log('Admin routes added');
+    
+    console.log('All routes registered successfully');
   
-  console.log('All routes registered successfully');
+  // 静态文件服务
+  console.log('Adding static file serving...');
+  app.use('/static', serveStatic({
+    root: './public'
+  }));
+  console.log('Static file serving added');
+  
+  // 后台管理面板
+  console.log('Adding admin panel...');
+  app.get('*', serveStatic({
+    root: './public',
+    path: '/index.html'
+  }));
+  console.log('Admin panel added');
 } catch (error) {
   console.error('Error registering routes:', error);
   // 即使路由注册失败，也要确保服务能够启动
