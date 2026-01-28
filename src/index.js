@@ -564,7 +564,146 @@ try {
         
         <!-- 内容区域 -->
         <div class="content">
-            <!-- 标签页内容将通过JavaScript动态显示 -->
+            <!-- 标签页内容 -->
+            <div class="tab-content">
+                <!-- 首页仪表盘 -->
+                <div id="dashboard" class="tab-pane active">
+                    <div class="dashboard">
+                        <h3>系统概览</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card dance">
+                                <h4>总学员数</h4>
+                                <p>128</p>
+                            </div>
+                            <div class="stat-card course">
+                                <h4>总课程数</h4>
+                                <p>45</p>
+                            </div>
+                            <div class="stat-card attendance">
+                                <h4>今日考勤</h4>
+                                <p>89</p>
+                            </div>
+                            <div class="stat-card revenue">
+                                <h4>总收入</h4>
+                                <p>¥12,580</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="api-section">
+                        <h3>API接口信息</h3>
+                        <div class="api-info">
+                            <h4>北京青翎舞蹈艺术中心管理系统API</h4>
+                            <p>版本: 1.0.0</p>
+                            <p>请参考以下API端点进行系统操作</p>
+                        </div>
+                        
+                        <div class="api-endpoints">
+                            <div class="endpoint-card">
+                                <h5>认证接口</h5>
+                                <p>/api/auth/*</p>
+                            </div>
+                            <div class="endpoint-card">
+                                <h5>学员接口</h5>
+                                <p>/api/student/*</p>
+                            </div>
+                            <div class="endpoint-card">
+                                <h5>教师接口</h5>
+                                <p>/api/teacher/*</p>
+                            </div>
+                            <div class="endpoint-card">
+                                <h5>教务接口</h5>
+                                <p>/api/staff/*</p>
+                            </div>
+                            <div class="endpoint-card">
+                                <h5>管理员接口</h5>
+                                <p>/api/admin/*</p>
+                            </div>
+                            <div class="endpoint-card">
+                                <h5>健康检查</h5>
+                                <p>/health</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 学员管理 -->
+                <div id="students" class="tab-pane">
+                    <div class="dashboard">
+                        <h3>学员管理</h3>
+                        <div class="api-section">
+                            <p>学员管理功能开发中...</p>
+                            <p>即将支持：学员信息管理、报名管理、课程分配等功能</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 课程管理 -->
+                <div id="courses" class="tab-pane">
+                    <div class="dashboard">
+                        <h3>课程管理</h3>
+                        <div class="api-section">
+                            <p>课程管理功能开发中...</p>
+                            <p>即将支持：课程创建、编辑、排课、课程材料管理等功能</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 考勤管理 -->
+                <div id="attendance" class="tab-pane">
+                    <div class="dashboard">
+                        <h3>考勤管理</h3>
+                        <div class="api-section">
+                            <p>考勤管理功能开发中...</p>
+                            <p>即将支持：学员打卡、考勤统计、请假管理等功能</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 财务管理 -->
+                <div id="finance" class="tab-pane">
+                    <div class="dashboard">
+                        <h3>财务管理</h3>
+                        <div class="api-section">
+                            <p>财务管理功能开发中...</p>
+                            <p>即将支持：收费管理、费用统计、财务报表等功能</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 统计报表 -->
+                <div id="reports" class="tab-pane">
+                    <div class="dashboard">
+                        <h3>统计报表</h3>
+                        <div class="api-section">
+                            <p>统计报表功能开发中...</p>
+                            <p>即将支持：学员统计、课程统计、收入统计等功能</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 系统设置 -->
+                <div id="settings" class="tab-pane">
+                    <div class="dashboard">
+                        <h3>系统设置</h3>
+                        <div class="api-section">
+                            <p>系统设置功能开发中...</p>
+                            <p>即将支持：用户管理、角色权限、系统配置等功能</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- API测试工具 -->
+                <div id="api-test" class="tab-pane">
+                    <div class="dashboard">
+                        <h3>API测试工具</h3>
+                        <div class="api-section">
+                            <p>API测试工具功能开发中...</p>
+                            <p>即将支持：API接口测试、请求模拟、响应查看等功能</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- 版权信息 -->
             <div class="copyright">
@@ -590,147 +729,6 @@ try {
                     <div class="copyright-footer">
                         <p>&copy; 2025 北京青翎文化传播有限公司 版权所有 All Rights Reserved</p>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 标签页内容 -->
-    <div class="tab-content">
-        <!-- 首页仪表盘 -->
-        <div id="dashboard" class="tab-pane active">
-            <div class="dashboard">
-                <h3>系统概览</h3>
-                <div class="stats-grid">
-                    <div class="stat-card dance">
-                        <h4>总学员数</h4>
-                        <p>128</p>
-                    </div>
-                    <div class="stat-card course">
-                        <h4>总课程数</h4>
-                        <p>45</p>
-                    </div>
-                    <div class="stat-card attendance">
-                        <h4>今日考勤</h4>
-                        <p>89</p>
-                    </div>
-                    <div class="stat-card revenue">
-                        <h4>总收入</h4>
-                        <p>¥12,580</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="api-section">
-                <h3>API接口信息</h3>
-                <div class="api-info">
-                    <h4>北京青翎舞蹈艺术中心管理系统API</h4>
-                    <p>版本: 1.0.0</p>
-                    <p>请参考以下API端点进行系统操作</p>
-                </div>
-                
-                <div class="api-endpoints">
-                    <div class="endpoint-card">
-                        <h5>认证接口</h5>
-                        <p>/api/auth/*</p>
-                    </div>
-                    <div class="endpoint-card">
-                        <h5>学员接口</h5>
-                        <p>/api/student/*</p>
-                    </div>
-                    <div class="endpoint-card">
-                        <h5>教师接口</h5>
-                        <p>/api/teacher/*</p>
-                    </div>
-                    <div class="endpoint-card">
-                        <h5>教务接口</h5>
-                        <p>/api/staff/*</p>
-                    </div>
-                    <div class="endpoint-card">
-                        <h5>管理员接口</h5>
-                        <p>/api/admin/*</p>
-                    </div>
-                    <div class="endpoint-card">
-                        <h5>健康检查</h5>
-                        <p>/health</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 学员管理 -->
-        <div id="students" class="tab-pane">
-            <div class="dashboard">
-                <h3>学员管理</h3>
-                <div class="api-section">
-                    <p>学员管理功能开发中...</p>
-                    <p>即将支持：学员信息管理、报名管理、课程分配等功能</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 课程管理 -->
-        <div id="courses" class="tab-pane">
-            <div class="dashboard">
-                <h3>课程管理</h3>
-                <div class="api-section">
-                    <p>课程管理功能开发中...</p>
-                    <p>即将支持：课程创建、编辑、排课、课程材料管理等功能</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 考勤管理 -->
-        <div id="attendance" class="tab-pane">
-            <div class="dashboard">
-                <h3>考勤管理</h3>
-                <div class="api-section">
-                    <p>考勤管理功能开发中...</p>
-                    <p>即将支持：学员打卡、考勤统计、请假管理等功能</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 财务管理 -->
-        <div id="finance" class="tab-pane">
-            <div class="dashboard">
-                <h3>财务管理</h3>
-                <div class="api-section">
-                    <p>财务管理功能开发中...</p>
-                    <p>即将支持：收费管理、费用统计、财务报表等功能</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 统计报表 -->
-        <div id="reports" class="tab-pane">
-            <div class="dashboard">
-                <h3>统计报表</h3>
-                <div class="api-section">
-                    <p>统计报表功能开发中...</p>
-                    <p>即将支持：学员统计、课程统计、收入统计等功能</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 系统设置 -->
-        <div id="settings" class="tab-pane">
-            <div class="dashboard">
-                <h3>系统设置</h3>
-                <div class="api-section">
-                    <p>系统设置功能开发中...</p>
-                    <p>即将支持：用户管理、角色权限、系统配置等功能</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- API测试工具 -->
-        <div id="api-test" class="tab-pane">
-            <div class="dashboard">
-                <h3>API测试工具</h3>
-                <div class="api-section">
-                    <p>API测试工具功能开发中...</p>
-                    <p>即将支持：API接口测试、请求模拟、响应查看等功能</p>
                 </div>
             </div>
         </div>
