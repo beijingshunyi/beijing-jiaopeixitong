@@ -177,7 +177,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>教培系统后台管理面板</title>
+    <title>北京青翎舞蹈艺术中心 - 管理系统</title>
     <style>
         * {
             margin: 0;
@@ -186,257 +186,495 @@ try {
         }
         
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f5f5f5;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background-color: #f8f9fa;
             color: #333;
             line-height: 1.6;
+            overflow-x: hidden;
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            background-color: #2c3e50;
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: white;
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
+            padding: 30px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
             text-align: center;
+            padding: 0 20px 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
-        .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
+        .sidebar-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffffff;
         }
         
-        .header p {
-            font-size: 18px;
-            opacity: 0.9;
+        .sidebar-header p {
+            font-size: 14px;
+            opacity: 0.8;
+            color: #ecf0f1;
         }
         
-        .content {
-            background-color: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .nav-menu {
+            list-style: none;
+            margin-top: 30px;
         }
         
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+        .nav-menu li {
+            margin-bottom: 5px;
         }
         
-        .dashboard-card {
+        .nav-menu a {
+            display: block;
+            padding: 15px 30px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-menu a:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            border-left-color: #3498db;
+            transform: translateX(5px);
+        }
+        
+        .nav-menu a.active {
+            background-color: rgba(52,152,219,0.2);
+            color: white;
+            border-left-color: #3498db;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
             background-color: #f8f9fa;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        /* 顶部导航 */
+        .top-nav {
+            background-color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .dashboard-card h3 {
-            color: #7f8c8d;
-            margin-bottom: 20px;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .dashboard-card p {
-            font-size: 36px;
-            font-weight: bold;
+        .top-nav h2 {
+            font-size: 24px;
             color: #2c3e50;
+            font-weight: 600;
         }
         
-        .dashboard-card.primary {
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-info span {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .user-info button {
+            padding: 8px 16px;
             background-color: #3498db;
             color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
         
-        .dashboard-card.primary h3 {
-            color: rgba(255,255,255,0.9);
+        .user-info button:hover {
+            background-color: #2980b9;
         }
         
-        .dashboard-card.primary p {
-            color: white;
+        /* 内容区域 */
+        .content {
+            padding: 30px;
         }
         
-        .dashboard-card.success {
-            background-color: #2ecc71;
-            color: white;
+        /* 仪表盘 */
+        .dashboard {
+            margin-bottom: 30px;
         }
         
-        .dashboard-card.success h3 {
-            color: rgba(255,255,255,0.9);
-        }
-        
-        .dashboard-card.success p {
-            color: white;
-        }
-        
-        .dashboard-card.warning {
-            background-color: #f39c12;
-            color: white;
-        }
-        
-        .dashboard-card.warning h3 {
-            color: rgba(255,255,255,0.9);
-        }
-        
-        .dashboard-card.warning p {
-            color: white;
-        }
-        
-        .api-section {
-            margin-top: 40px;
-            padding-top: 40px;
-            border-top: 1px solid #e9ecef;
-        }
-        
-        .api-section h2 {
+        .dashboard h3 {
+            font-size: 18px;
             color: #2c3e50;
             margin-bottom: 20px;
-            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border-top: 4px solid #3498db;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h4 {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card p {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .stat-card.dance {
+            border-top-color: #e74c3c;
+        }
+        
+        .stat-card.course {
+            border-top-color: #2ecc71;
+        }
+        
+        .stat-card.attendance {
+            border-top-color: #f39c12;
+        }
+        
+        .stat-card.revenue {
+            border-top-color: #9b59b6;
+        }
+        
+        /* API部分 */
+        .api-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        
+        .api-section h3 {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
         }
         
         .api-info {
             background-color: #f8f9fa;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 8px;
             border-left: 4px solid #3498db;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         
-        .api-info h3 {
+        .api-info h4 {
+            font-size: 16px;
             color: #2c3e50;
             margin-bottom: 10px;
-            font-size: 18px;
         }
         
         .api-info p {
+            font-size: 14px;
             color: #6c757d;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .api-endpoints {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 15px;
-            margin-top: 20px;
         }
         
         .endpoint-card {
-            background-color: #e8f4f8;
-            padding: 15px;
+            background-color: #f8f9fa;
+            padding: 20px;
             border-radius: 8px;
             border-left: 3px solid #3498db;
+            transition: all 0.3s ease;
         }
         
-        .endpoint-card h4 {
-            color: #2c3e50;
-            margin-bottom: 5px;
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        
+        .endpoint-card h5 {
             font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
         
         .endpoint-card p {
-            color: #6c757d;
             font-size: 13px;
+            color: #6c757d;
         }
         
-        .footer {
+        /* 版权信息 */
+        .copyright {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px 30px;
             margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+        }
+        
+        .copyright-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .copyright-header {
             text-align: center;
-            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        
+        .copyright-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+        
+        .copyright-header p {
             font-size: 14px;
+            opacity: 0.8;
+            color: #ecf0f1;
+        }
+        
+        .copyright-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .info-item h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #3498db;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-item p {
+            font-size: 14px;
+            line-height: 1.6;
+            opacity: 0.8;
+            color: #ecf0f1;
+        }
+        
+        .copyright-footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .copyright-footer p {
+            font-size: 13px;
+            opacity: 0.7;
+            color: #bdc3c7;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+            }
+            
+            .top-nav {
+                padding: 15px 20px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>教培系统后台管理面板</h1>
-            <p>欢迎使用教培系统管理平台</p>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>北京青翎舞蹈艺术中心</h1>
+            <p>管理系统</p>
+        </div>
+        <ul class="nav-menu">
+            <li><a href="#" class="active">首页仪表盘</a></li>
+            <li><a href="#">学员管理</a></li>
+            <li><a href="#">课程管理</a></li>
+            <li><a href="#">考勤管理</a></li>
+            <li><a href="#">财务管理</a></li>
+            <li><a href="#">统计报表</a></li>
+            <li><a href="#">系统设置</a></li>
+            <li><a href="#">API测试工具</a></li>
+        </ul>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 顶部导航 -->
+        <div class="top-nav">
+            <h2>北京青翎舞蹈艺术中心</h2>
+            <div class="user-info">
+                <span>管理员</span>
+                <button>退出登录</button>
+            </div>
         </div>
         
+        <!-- 内容区域 -->
         <div class="content">
-            <h2>系统概览</h2>
-            <div class="dashboard-grid">
-                <div class="dashboard-card primary">
-                    <h3>总用户数</h3>
-                    <p>128</p>
-                </div>
-                <div class="dashboard-card success">
-                    <h3>总课程数</h3>
-                    <p>45</p>
-                </div>
-                <div class="dashboard-card warning">
-                    <h3>今日考勤</h3>
-                    <p>89</p>
-                </div>
-                <div class="dashboard-card">
-                    <h3>总收入</h3>
-                    <p>¥12,580</p>
+            <!-- 仪表盘 -->
+            <div class="dashboard">
+                <h3>系统概览</h3>
+                <div class="stats-grid">
+                    <div class="stat-card dance">
+                        <h4>总学员数</h4>
+                        <p>128</p>
+                    </div>
+                    <div class="stat-card course">
+                        <h4>总课程数</h4>
+                        <p>45</p>
+                    </div>
+                    <div class="stat-card attendance">
+                        <h4>今日考勤</h4>
+                        <p>89</p>
+                    </div>
+                    <div class="stat-card revenue">
+                        <h4>总收入</h4>
+                        <p>¥12,580</p>
+                    </div>
                 </div>
             </div>
             
+            <!-- API接口信息 -->
             <div class="api-section">
-                <h2>API接口信息</h2>
+                <h3>API接口信息</h3>
                 <div class="api-info">
-                    <h3>教培系统后端API</h3>
+                    <h4>北京青翎舞蹈艺术中心管理系统API</h4>
                     <p>版本: 1.0.0</p>
                     <p>请参考以下API端点进行系统操作</p>
                 </div>
                 
                 <div class="api-endpoints">
                     <div class="endpoint-card">
-                        <h4>认证接口</h4>
+                        <h5>认证接口</h5>
                         <p>/api/auth/*</p>
                     </div>
                     <div class="endpoint-card">
-                        <h4>学生接口</h4>
+                        <h5>学员接口</h5>
                         <p>/api/student/*</p>
                     </div>
                     <div class="endpoint-card">
-                        <h4>教师接口</h4>
+                        <h5>教师接口</h5>
                         <p>/api/teacher/*</p>
                     </div>
                     <div class="endpoint-card">
-                        <h4>教务接口</h4>
+                        <h5>教务接口</h5>
                         <p>/api/staff/*</p>
                     </div>
                     <div class="endpoint-card">
-                        <h4>管理员接口</h4>
+                        <h5>管理员接口</h5>
                         <p>/api/admin/*</p>
                     </div>
                     <div class="endpoint-card">
-                        <h4>健康检查</h4>
+                        <h5>健康检查</h5>
                         <p>/health</p>
                     </div>
                 </div>
             </div>
             
-            <div class="footer">
-                <p>&copy; 2024 教培系统管理平台 | 技术支持：系统开发团队</p>
+            <!-- 版权信息 -->
+            <div class="copyright">
+                <div class="copyright-content">
+                    <div class="copyright-header">
+                        <h3>北京青翎舞蹈艺术中心</h3>
+                        <p>由北京青翎文化传播有限公司全资所有并运营</p>
+                    </div>
+                    <div class="copyright-info">
+                        <div class="info-item">
+                            <h4>业务范围</h4>
+                            <p>专业成人舞蹈艺术教育 · 商业演出策划 · 企业年会编排</p>
+                        </div>
+                        <div class="info-item">
+                            <h4>联系我们</h4>
+                            <p>联系电话：15011258120<br>投诉举报：18363070253</p>
+                        </div>
+                        <div class="info-item">
+                            <h4>机构地址</h4>
+                            <p>北京市东城区崇文门北京商界A座8楼818</p>
+                        </div>
+                    </div>
+                    <div class="copyright-footer">
+                        <p>&copy; 2025 北京青翎文化传播有限公司 版权所有 All Rights Reserved</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    
+    <script>
+        // 导航菜单切换
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 移除所有活动状态
+                document.querySelectorAll('.nav-menu a').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // 添加当前活动状态
+                this.classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>`
       );
     });
     console.log('Admin panel added');
+
 
 } catch (error) {
   console.error('Error registering routes:', error);
