@@ -1,5 +1,5 @@
 import { sign, verify } from 'hono/jwt';
-import { supabaseService } from './supabase';
+import { supabaseService } from './supabase.js';
 
 // 生成JWT令牌
 const generateToken = (userId, roleId) => {

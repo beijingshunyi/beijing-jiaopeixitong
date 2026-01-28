@@ -1,4 +1,4 @@
-import authService from '../services/auth';
+import authService from '../services/auth.js';
 
 // 用户注册
 const register = async (c) => {

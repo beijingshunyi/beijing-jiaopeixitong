@@ -1,6 +1,14 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import routes from './routes';
+import routes from './routes/index.js';
+
+// 添加环境变量检查
+console.log('Environment variables loaded:', {
+  SUPABASE_URL: process.env.SUPABASE_URL ? '✓' : '✗',
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? '✓' : '✗',
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? '✓' : '✗',
+  JWT_SECRET: process.env.JWT_SECRET ? '✓' : '✗'
+});
 
 const app = new Hono();
 
@@ -24,7 +32,13 @@ app.get('/health', (c) => {
 });
 
 // 注册路由
-app.route('/api', routes);
+try {
+  app.route('/api', routes);
+  console.log('Routes registered successfully');
+} catch (error) {
+  console.error('Error registering routes:', error);
+  // 即使路由注册失败，也要确保服务能够启动
+}
 
 // 404 处理
 app.notFound((c) => {
@@ -33,8 +47,8 @@ app.notFound((c) => {
 
 // 错误处理中间件
 app.onError((err, c) => {
-  console.error('服务器错误:', err);
-  return c.json({ error: '服务器内部错误' }, 500);
+  console.error('Server error:', err);
+  return c.json({ error: '服务器内部错误', details: process.env.NODE_ENV === 'development' ? err.message : undefined }, 500);
 });
 
 // 导出应用

@@ -1,9 +1,9 @@
-const { supabaseService } = require('../services/supabase');
+import { supabaseService } from '../services/supabase.js';
 
 // 获取教师教授的课程
-const getMyCourses = async (req, res) => {
+const getMyCourses = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
+    const teacherId = c.get('userProfile').id;
 
     const { data: courses, error } = await supabaseService
       .from('courses')
@@ -24,17 +24,17 @@ const getMyCourses = async (req, res) => {
       throw new Error('获取课程列表失败');
     }
 
-    res.status(200).json({ courses });
+    return c.json({ courses });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 获取课程的学生列表
-const getCourseStudents = async (req, res) => {
+const getCourseStudents = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
-    const { courseId } = req.params;
+    const teacherId = c.get('userProfile').id;
+    const { courseId } = c.req.param();
 
     // 验证课程是否属于该教师
     const { data: course, error: courseError } = await supabaseService
@@ -66,7 +66,7 @@ const getCourseStudents = async (req, res) => {
       throw new Error('获取学生列表失败');
     }
 
-    res.status(200).json({ 
+    return c.json({ 
       students: students.map(item => ({
         id: item.student_id,
         name: item.user_profiles.name,
@@ -74,15 +74,15 @@ const getCourseStudents = async (req, res) => {
       })) 
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 录入学生成绩
-const enterGrades = async (req, res) => {
+const enterGrades = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
-    const { courseId, grades } = req.body;
+    const teacherId = c.get('userProfile').id;
+    const { courseId, grades } = await c.req.json();
 
     // 验证课程是否属于该教师
     const { data: course, error: courseError } = await supabaseService
@@ -159,17 +159,17 @@ const enterGrades = async (req, res) => {
     });
 
     const results = await Promise.all(gradePromises);
-    res.status(200).json({ success: true, grades: results });
+    return c.json({ success: true, grades: results });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 获取课程评价
-const getCourseEvaluations = async (req, res) => {
+const getCourseEvaluations = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
-    const { courseId } = req.params;
+    const teacherId = c.get('userProfile').id;
+    const { courseId } = c.req.param();
 
     // 验证课程是否属于该教师
     const { data: course, error: courseError } = await supabaseService
@@ -207,20 +207,20 @@ const getCourseEvaluations = async (req, res) => {
       ? evaluations.reduce((sum, evalItem) => sum + evalItem.score, 0) / evaluations.length 
       : 0;
 
-    res.status(200).json({ 
+    return c.json({ 
       evaluations,
       averageScore 
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 获取个人课表
-const getMySchedule = async (req, res) => {
+const getMySchedule = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
-    const { semester, year } = req.query;
+    const teacherId = c.get('userProfile').id;
+    const { semester, year } = c.req.query();
 
     if (!semester || !year) {
       throw new Error('请指定学期和年份');
@@ -246,17 +246,17 @@ const getMySchedule = async (req, res) => {
       throw new Error('获取课表失败');
     }
 
-    res.status(200).json({ courses });
+    return c.json({ courses });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 获取成绩统计
-const getGradeStatistics = async (req, res) => {
+const getGradeStatistics = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
-    const { courseId } = req.params;
+    const teacherId = c.get('userProfile').id;
+    const { courseId } = c.req.param();
 
     // 验证课程是否属于该教师
     const { data: course, error: courseError } = await supabaseService
@@ -282,7 +282,7 @@ const getGradeStatistics = async (req, res) => {
 
     // 计算统计数据
     if (grades.length === 0) {
-      return res.status(200).json({ 
+      return c.json({ 
         averageScore: 0,
         highestScore: 0,
         lowestScore: 0,
@@ -302,7 +302,7 @@ const getGradeStatistics = async (req, res) => {
       return acc;
     }, {});
 
-    res.status(200).json({ 
+    return c.json({ 
       averageScore,
       highestScore,
       lowestScore,
@@ -310,15 +310,15 @@ const getGradeStatistics = async (req, res) => {
       totalStudents: grades.length
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 更新个人信息
-const updateProfile = async (req, res) => {
+const updateProfile = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
-    const updateData = req.body;
+    const teacherId = c.get('userProfile').id;
+    const updateData = await c.req.json();
 
     const { data: updatedProfile, error } = await supabaseService
       .from('user_profiles')
@@ -331,17 +331,17 @@ const updateProfile = async (req, res) => {
       throw new Error('更新个人信息失败');
     }
 
-    res.status(200).json({ success: true, user: updatedProfile });
+    return c.json({ success: true, user: updatedProfile });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 申请开课
-const applyForCourse = async (req, res) => {
+const applyForCourse = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
-    const courseData = req.body;
+    const teacherId = c.get('userProfile').id;
+    const courseData = await c.req.json();
 
     // 创建开课申请
     const { data: application, error } = await supabaseService
@@ -359,16 +359,16 @@ const applyForCourse = async (req, res) => {
       throw new Error('提交申请失败');
     }
 
-    res.status(200).json({ success: true, application });
+    return c.json({ success: true, application });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 获取我的申请记录
-const getMyApplications = async (req, res) => {
+const getMyApplications = async (c) => {
   try {
-    const teacherId = req.userProfile.id;
+    const teacherId = c.get('userProfile').id;
 
     const { data: applications, error } = await supabaseService
       .from('applications')
@@ -380,13 +380,13 @@ const getMyApplications = async (req, res) => {
       throw new Error('获取申请记录失败');
     }
 
-    res.status(200).json({ applications });
+    return c.json({ applications });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
-module.exports = {
+export default {
   getMyCourses,
   getCourseStudents,
   enterGrades,

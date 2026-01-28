@@ -1,5 +1,5 @@
 import { verify } from 'hono/jwt';
-import { supabaseService } from '../services/supabase';
+import { supabaseService } from '../services/supabase.js';
 
 // 认证中间件
 const authMiddleware = async (c, next) => {

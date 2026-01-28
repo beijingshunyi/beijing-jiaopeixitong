@@ -1,9 +1,9 @@
-const { supabaseService } = require('../services/supabase');
+import { supabaseService } from '../services/supabase.js';
 
 // 学院管理
 
 // 获取学院列表
-const getColleges = async (req, res) => {
+const getColleges = async (c) => {
   try {
     const { data: colleges, error } = await supabaseService
       .from('colleges')
@@ -13,16 +13,16 @@ const getColleges = async (req, res) => {
       throw new Error('获取学院列表失败');
     }
 
-    res.status(200).json({ colleges });
+    return c.json({ colleges });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 创建学院
-const createCollege = async (req, res) => {
+const createCollege = async (c) => {
   try {
-    const { name, description } = req.body;
+    const { name, description } = await c.req.json();
 
     const { data: college, error } = await supabaseService
       .from('colleges')
@@ -34,17 +34,17 @@ const createCollege = async (req, res) => {
       throw new Error('创建学院失败');
     }
 
-    res.status(201).json({ college });
+    return c.json({ college }, 201);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 更新学院
-const updateCollege = async (req, res) => {
+const updateCollege = async (c) => {
   try {
-    const { id } = req.params;
-    const { name, description } = req.body;
+    const { id } = c.req.param();
+    const { name, description } = await c.req.json();
 
     const { data: college, error } = await supabaseService
       .from('colleges')
@@ -57,16 +57,16 @@ const updateCollege = async (req, res) => {
       throw new Error('更新学院失败');
     }
 
-    res.status(200).json({ college });
+    return c.json({ college });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 删除学院
-const deleteCollege = async (req, res) => {
+const deleteCollege = async (c) => {
   try {
-    const { id } = req.params;
+    const { id } = c.req.param();
 
     // 检查是否有关联的专业
     const { data: majors, error: majorError } = await supabaseService
@@ -91,18 +91,18 @@ const deleteCollege = async (req, res) => {
       throw new Error('删除学院失败');
     }
 
-    res.status(200).json({ success: true, message: '学院删除成功' });
+    return c.json({ success: true, message: '学院删除成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 专业管理
 
 // 获取专业列表
-const getMajors = async (req, res) => {
+const getMajors = async (c) => {
   try {
-    const { collegeId } = req.query;
+    const { collegeId } = c.req.query();
 
     let query = supabaseService
       .from('majors')
@@ -123,16 +123,16 @@ const getMajors = async (req, res) => {
       throw new Error('获取专业列表失败');
     }
 
-    res.status(200).json({ majors });
+    return c.json({ majors });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 创建专业
-const createMajor = async (req, res) => {
+const createMajor = async (c) => {
   try {
-    const { name, college_id, description } = req.body;
+    const { name, college_id, description } = await c.req.json();
 
     const { data: major, error } = await supabaseService
       .from('majors')
@@ -144,17 +144,17 @@ const createMajor = async (req, res) => {
       throw new Error('创建专业失败');
     }
 
-    res.status(201).json({ major });
+    return c.json({ major }, 201);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 更新专业
-const updateMajor = async (req, res) => {
+const updateMajor = async (c) => {
   try {
-    const { id } = req.params;
-    const { name, college_id, description } = req.body;
+    const { id } = c.req.param();
+    const { name, college_id, description } = await c.req.json();
 
     const { data: major, error } = await supabaseService
       .from('majors')
@@ -167,16 +167,16 @@ const updateMajor = async (req, res) => {
       throw new Error('更新专业失败');
     }
 
-    res.status(200).json({ major });
+    return c.json({ major });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 删除专业
-const deleteMajor = async (req, res) => {
+const deleteMajor = async (c) => {
   try {
-    const { id } = req.params;
+    const { id } = c.req.param();
 
     // 检查是否有关联的班级
     const { data: classes, error: classError } = await supabaseService
@@ -201,18 +201,18 @@ const deleteMajor = async (req, res) => {
       throw new Error('删除专业失败');
     }
 
-    res.status(200).json({ success: true, message: '专业删除成功' });
+    return c.json({ success: true, message: '专业删除成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 班级管理
 
 // 获取班级列表
-const getClasses = async (req, res) => {
+const getClasses = async (c) => {
   try {
-    const { majorId, year } = req.query;
+    const { majorId, year } = c.req.query();
 
     let query = supabaseService
       .from('classes')
@@ -237,16 +237,16 @@ const getClasses = async (req, res) => {
       throw new Error('获取班级列表失败');
     }
 
-    res.status(200).json({ classes });
+    return c.json({ classes });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 创建班级
-const createClass = async (req, res) => {
+const createClass = async (c) => {
   try {
-    const { name, major_id, year } = req.body;
+    const { name, major_id, year } = await c.req.json();
 
     const { data: classObj, error } = await supabaseService
       .from('classes')
@@ -258,17 +258,17 @@ const createClass = async (req, res) => {
       throw new Error('创建班级失败');
     }
 
-    res.status(201).json({ class: classObj });
+    return c.json({ class: classObj }, 201);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 更新班级
-const updateClass = async (req, res) => {
+const updateClass = async (c) => {
   try {
-    const { id } = req.params;
-    const { name, major_id, year } = req.body;
+    const { id } = c.req.param();
+    const { name, major_id, year } = await c.req.json();
 
     const { data: classObj, error } = await supabaseService
       .from('classes')
@@ -281,16 +281,16 @@ const updateClass = async (req, res) => {
       throw new Error('更新班级失败');
     }
 
-    res.status(200).json({ class: classObj });
+    return c.json({ class: classObj });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 删除班级
-const deleteClass = async (req, res) => {
+const deleteClass = async (c) => {
   try {
-    const { id } = req.params;
+    const { id } = c.req.param();
 
     // 检查是否有关联的学生
     const { data: students, error: studentError } = await supabaseService
@@ -315,18 +315,18 @@ const deleteClass = async (req, res) => {
       throw new Error('删除班级失败');
     }
 
-    res.status(200).json({ success: true, message: '班级删除成功' });
+    return c.json({ success: true, message: '班级删除成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 教学计划管理
 
 // 获取教学计划
-const getTeachingPlans = async (req, res) => {
+const getTeachingPlans = async (c) => {
   try {
-    const { majorId } = req.query;
+    const { majorId } = c.req.query();
 
     let query = supabaseService
       .from('teaching_plans')
@@ -353,16 +353,16 @@ const getTeachingPlans = async (req, res) => {
       throw new Error('获取教学计划失败');
     }
 
-    res.status(200).json({ plans });
+    return c.json({ plans });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 创建教学计划
-const createTeachingPlan = async (req, res) => {
+const createTeachingPlan = async (c) => {
   try {
-    const { major_id, course_id, semester } = req.body;
+    const { major_id, course_id, semester } = await c.req.json();
 
     const { data: plan, error } = await supabaseService
       .from('teaching_plans')
@@ -374,16 +374,16 @@ const createTeachingPlan = async (req, res) => {
       throw new Error('创建教学计划失败');
     }
 
-    res.status(201).json({ plan });
+    return c.json({ plan }, 201);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 删除教学计划
-const deleteTeachingPlan = async (req, res) => {
+const deleteTeachingPlan = async (c) => {
   try {
-    const { id } = req.params;
+    const { id } = c.req.param();
 
     const { error } = await supabaseService
       .from('teaching_plans')
@@ -394,18 +394,18 @@ const deleteTeachingPlan = async (req, res) => {
       throw new Error('删除教学计划失败');
     }
 
-    res.status(200).json({ success: true, message: '教学计划删除成功' });
+    return c.json({ success: true, message: '教学计划删除成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 培养方案管理
 
 // 获取培养方案
-const getTrainingPrograms = async (req, res) => {
+const getTrainingPrograms = async (c) => {
   try {
-    const { majorId } = req.query;
+    const { majorId } = c.req.query();
 
     let query = supabaseService
       .from('training_programs')
@@ -428,16 +428,16 @@ const getTrainingPrograms = async (req, res) => {
       throw new Error('获取培养方案失败');
     }
 
-    res.status(200).json({ programs });
+    return c.json({ programs });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 创建培养方案
-const createTrainingProgram = async (req, res) => {
+const createTrainingProgram = async (c) => {
   try {
-    const { name, major_id, description, credits_required, duration } = req.body;
+    const { name, major_id, description, credits_required, duration } = await c.req.json();
 
     const { data: program, error } = await supabaseService
       .from('training_programs')
@@ -449,17 +449,17 @@ const createTrainingProgram = async (req, res) => {
       throw new Error('创建培养方案失败');
     }
 
-    res.status(201).json({ program });
+    return c.json({ program }, 201);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 更新培养方案
-const updateTrainingProgram = async (req, res) => {
+const updateTrainingProgram = async (c) => {
   try {
-    const { id } = req.params;
-    const { name, description, credits_required, duration } = req.body;
+    const { id } = c.req.param();
+    const { name, description, credits_required, duration } = await c.req.json();
 
     const { data: program, error } = await supabaseService
       .from('training_programs')
@@ -472,16 +472,16 @@ const updateTrainingProgram = async (req, res) => {
       throw new Error('更新培养方案失败');
     }
 
-    res.status(200).json({ program });
+    return c.json({ program });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 删除培养方案
-const deleteTrainingProgram = async (req, res) => {
+const deleteTrainingProgram = async (c) => {
   try {
-    const { id } = req.params;
+    const { id } = c.req.param();
 
     const { error } = await supabaseService
       .from('training_programs')
@@ -492,18 +492,18 @@ const deleteTrainingProgram = async (req, res) => {
       throw new Error('删除培养方案失败');
     }
 
-    res.status(200).json({ success: true, message: '培养方案删除成功' });
+    return c.json({ success: true, message: '培养方案删除成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 申请管理
 
 // 获取所有申请
-const getApplications = async (req, res) => {
+const getApplications = async (c) => {
   try {
-    const { type, status } = req.query;
+    const { type, status } = c.req.query();
 
     let query = supabaseService
       .from('applications')
@@ -532,17 +532,17 @@ const getApplications = async (req, res) => {
       throw new Error('获取申请列表失败');
     }
 
-    res.status(200).json({ applications });
+    return c.json({ applications });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 处理申请
-const processApplication = async (req, res) => {
+const processApplication = async (c) => {
   try {
-    const { id } = req.params;
-    const { status, comment } = req.body;
+    const { id } = c.req.param();
+    const { status, comment } = await c.req.json();
 
     // 获取申请详情
     const { data: application, error: getError } = await supabaseService
@@ -597,18 +597,18 @@ const processApplication = async (req, res) => {
       throw new Error('处理申请失败');
     }
 
-    res.status(200).json({ application: updatedApp });
+    return c.json({ application: updatedApp });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 学生管理
 
 // 获取学生列表
-const getStudents = async (req, res) => {
+const getStudents = async (c) => {
   try {
-    const { collegeId, majorId, classId } = req.query;
+    const { collegeId, majorId, classId } = c.req.query();
 
     let query = supabaseService
       .from('user_profiles')
@@ -642,18 +642,18 @@ const getStudents = async (req, res) => {
       throw new Error('获取学生列表失败');
     }
 
-    res.status(200).json({ students });
+    return c.json({ students });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 教学评价管理
 
 // 获取评价列表
-const getEvaluations = async (req, res) => {
+const getEvaluations = async (c) => {
   try {
-    const { courseId, teacherId } = req.query;
+    const { courseId, teacherId } = c.req.query();
 
     let query = supabaseService
       .from('evaluations')
@@ -681,13 +681,13 @@ const getEvaluations = async (req, res) => {
       throw new Error('获取评价列表失败');
     }
 
-    res.status(200).json({ evaluations });
+    return c.json({ evaluations });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
-module.exports = {
+export default {
   // 学院管理
   getColleges,
   createCollege,

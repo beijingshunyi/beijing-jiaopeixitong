@@ -1,12 +1,12 @@
-const { supabaseService } = require('../services/supabase');
-const authService = require('../services/auth');
+import { supabaseService } from '../services/supabase.js';
+import authService from '../services/auth.js';
 
 // 用户管理
 
 // 获取所有用户
-const getAllUsers = async (req, res) => {
+const getAllUsers = async (c) => {
   try {
-    const { roleId, collegeId } = req.query;
+    const { roleId, collegeId } = c.req.query();
 
     let query = supabaseService
       .from('user_profiles')
@@ -38,31 +38,31 @@ const getAllUsers = async (req, res) => {
       throw new Error('获取用户列表失败');
     }
 
-    res.status(200).json({ users });
+    return c.json({ users });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 创建用户
-const createUser = async (req, res) => {
+const createUser = async (c) => {
   try {
-    const userData = req.body;
+    const userData = await c.req.json();
     
     // 使用认证服务注册用户
     const result = await authService.register(userData);
     
-    res.status(201).json({ user: result.user, token: result.token });
+    return c.json({ user: result.user, token: result.token }, 201);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 更新用户
-const updateUser = async (req, res) => {
+const updateUser = async (c) => {
   try {
-    const { id } = req.params;
-    const updateData = req.body;
+    const { id } = c.req.param();
+    const updateData = await c.req.json();
 
     // 更新用户档案
     const { data: updatedUser, error } = await supabaseService
@@ -76,16 +76,16 @@ const updateUser = async (req, res) => {
       throw new Error('更新用户失败');
     }
 
-    res.status(200).json({ user: updatedUser });
+    return c.json({ user: updatedUser });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 删除用户
-const deleteUser = async (req, res) => {
+const deleteUser = async (c) => {
   try {
-    const { id } = req.params;
+    const { id } = c.req.param();
 
     // 1. 删除用户档案
     const { error: profileError } = await supabaseService
@@ -104,16 +104,16 @@ const deleteUser = async (req, res) => {
       throw new Error('删除认证用户失败');
     }
 
-    res.status(200).json({ success: true, message: '用户删除成功' });
+    return c.json({ success: true, message: '用户删除成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 重置用户密码
-const resetPassword = async (req, res) => {
+const resetPassword = async (c) => {
   try {
-    const { id, newPassword } = req.body;
+    const { id, newPassword } = await c.req.json();
 
     const { error } = await supabaseService.auth.admin.updateUserById(id, {
       password: newPassword
@@ -123,16 +123,16 @@ const resetPassword = async (req, res) => {
       throw new Error('重置密码失败');
     }
 
-    res.status(200).json({ success: true, message: '密码重置成功' });
+    return c.json({ success: true, message: '密码重置成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 角色管理
 
 // 获取所有角色
-const getAllRoles = async (req, res) => {
+const getAllRoles = async (c) => {
   try {
     const { data: roles, error } = await supabaseService
       .from('roles')
@@ -142,16 +142,16 @@ const getAllRoles = async (req, res) => {
       throw new Error('获取角色列表失败');
     }
 
-    res.status(200).json({ roles });
+    return c.json({ roles });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 创建角色
-const createRole = async (req, res) => {
+const createRole = async (c) => {
   try {
-    const { name, description } = req.body;
+    const { name, description } = await c.req.json();
 
     const { data: role, error } = await supabaseService
       .from('roles')
@@ -163,17 +163,17 @@ const createRole = async (req, res) => {
       throw new Error('创建角色失败');
     }
 
-    res.status(201).json({ role });
+    return c.json({ role }, 201);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 更新角色
-const updateRole = async (req, res) => {
+const updateRole = async (c) => {
   try {
-    const { id } = req.params;
-    const { name, description } = req.body;
+    const { id } = c.req.param();
+    const { name, description } = await c.req.json();
 
     const { data: role, error } = await supabaseService
       .from('roles')
@@ -186,16 +186,16 @@ const updateRole = async (req, res) => {
       throw new Error('更新角色失败');
     }
 
-    res.status(200).json({ role });
+    return c.json({ role });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 删除角色
-const deleteRole = async (req, res) => {
+const deleteRole = async (c) => {
   try {
-    const { id } = req.params;
+    const { id } = c.req.param();
 
     // 检查是否有用户使用该角色
     const { data: users, error: userError } = await supabaseService
@@ -220,18 +220,18 @@ const deleteRole = async (req, res) => {
       throw new Error('删除角色失败');
     }
 
-    res.status(200).json({ success: true, message: '角色删除成功' });
+    return c.json({ success: true, message: '角色删除成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 权限管理（用户角色分配）
 
 // 获取用户角色分配
-const getUserRoles = async (req, res) => {
+const getUserRoles = async (c) => {
   try {
-    const { userId } = req.params;
+    const { userId } = c.req.param();
 
     const { data: userRoles, error } = await supabaseService
       .from('user_roles')
@@ -245,7 +245,7 @@ const getUserRoles = async (req, res) => {
       throw new Error('获取用户角色失败');
     }
 
-    res.status(200).json({ 
+    return c.json({ 
       roles: userRoles.map(item => ({
         id: item.role_id,
         name: item.roles.name,
@@ -253,14 +253,14 @@ const getUserRoles = async (req, res) => {
       })) 
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 分配角色给用户
-const assignRole = async (req, res) => {
+const assignRole = async (c) => {
   try {
-    const { userId, roleId } = req.body;
+    const { userId, roleId } = await c.req.json();
 
     // 检查用户是否存在
     const { data: user, error: userError } = await supabaseService
@@ -307,16 +307,16 @@ const assignRole = async (req, res) => {
       throw new Error('分配角色失败');
     }
 
-    res.status(200).json({ success: true, assignment });
+    return c.json({ success: true, assignment });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 从用户移除角色
-const removeRole = async (req, res) => {
+const removeRole = async (c) => {
   try {
-    const { userId, roleId } = req.body;
+    const { userId, roleId } = await c.req.json();
 
     const { error } = await supabaseService
       .from('user_roles')
@@ -328,16 +328,16 @@ const removeRole = async (req, res) => {
       throw new Error('移除角色失败');
     }
 
-    res.status(200).json({ success: true, message: '角色移除成功' });
+    return c.json({ success: true, message: '角色移除成功' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
 // 系统统计
 
 // 获取系统统计数据
-const getSystemStats = async (req, res) => {
+const getSystemStats = async (c) => {
   try {
     // 获取用户统计
     const { data: userStats, error: userError } = await supabaseService
@@ -384,7 +384,7 @@ const getSystemStats = async (req, res) => {
       courseStatusStats[stat.status] = stat.count;
     });
 
-    res.status(200).json({
+    return c.json({
       users: {
         total: Object.values(userRoleStats).reduce((sum, count) => sum + count, 0),
         byRole: userRoleStats
@@ -398,11 +398,11 @@ const getSystemStats = async (req, res) => {
       classes: classCount
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    return c.json({ error: error.message }, 400);
   }
 };
 
-module.exports = {
+export default {
   // 用户管理
   getAllUsers,
   createUser,

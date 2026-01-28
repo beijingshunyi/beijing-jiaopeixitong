@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
-import authController from '../controllers/auth';
-import studentController from '../controllers/student';
-import teacherController from '../controllers/teacher';
-import staffController from '../controllers/staff';
-import adminController from '../controllers/admin';
-import { authMiddleware, roleMiddleware } from '../middleware/auth';
+import authController from '../controllers/auth.js';
+import studentController from '../controllers/student.js';
+import teacherController from '../controllers/teacher.js';
+import staffController from '../controllers/staff.js';
+import adminController from '../controllers/admin.js';
+import { authMiddleware, roleMiddleware } from '../middleware/auth.js';
 
 const router = new Hono();
 
