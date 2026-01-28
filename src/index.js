@@ -1,7 +1,11 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import routes from './routes/index.js';
 import authController from './controllers/auth.js';
+import studentController from './controllers/student.js';
+import teacherController from './controllers/teacher.js';
+import staffController from './controllers/staff.js';
+import adminController from './controllers/admin.js';
+import { authMiddleware, roleMiddleware } from './middleware/auth.js';
 
 // 添加环境变量检查
 console.log('Environment variables loaded:', {
@@ -32,29 +36,50 @@ app.get('/health', (c) => {
   return c.json({ status: 'ok', message: '服务运行正常' });
 });
 
+// 角色ID映射
+const ROLES = {
+  ADMIN: 1,
+  STAFF: 2,
+  TEACHER: 3,
+  STUDENT: 4
+};
+
 // 注册路由
 try {
   console.log('Registering routes...');
-  console.log('Routes object:', routes);
-  app.route('/api', routes);
-  console.log('Routes registered successfully');
   
-  // 直接注册认证路由到主应用
-  console.log('Adding direct auth routes...');
-  app.post('/api/auth/register', authController.register);
-  app.post('/api/auth/login', authController.login);
-  app.post('/api/auth/refresh', authController.refreshToken);
-  app.post('/api/auth/logout', authController.logout);
-  app.get('/api/auth/me', (c) => {
-    return c.json({ error: '未提供认证令牌' }, 401);
-  });
-  console.log('Direct auth routes added');
-  
-  // 测试直接注册一个路由
+  // 测试路由
   app.post('/test/login', (c) => {
     return c.json({ test: 'login route works' });
   });
   console.log('Test route added');
+  
+  // 认证路由
+  console.log('Adding auth routes...');
+  app.post('/api/auth/register', authController.register);
+  app.post('/api/auth/login', authController.login);
+  app.post('/api/auth/refresh', authController.refreshToken);
+  app.post('/api/auth/logout', authController.logout);
+  app.get('/api/auth/me', authMiddleware, authController.getCurrentUser);
+  console.log('Auth routes added');
+  
+  // 学生路由
+  console.log('Adding student routes...');
+  app.get('/api/student/dashboard', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getDashboard);
+  app.get('/api/student/courses/available', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getAvailableCourses);
+  app.post('/api/student/courses/enroll', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.enrollCourse);
+  app.post('/api/student/courses/drop', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.dropCourse);
+  app.get('/api/student/courses/enrolled', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getEnrolledCourses);
+  app.get('/api/student/grades', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getGrades);
+  app.get('/api/student/schedule', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getSchedule);
+  app.post('/api/student/evaluations', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.submitEvaluation);
+  app.get('/api/student/teaching-plan', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getTeachingPlan);
+  app.get('/api/student/training-program', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getTrainingProgram);
+  app.put('/api/student/profile', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.updateProfile);
+  app.post('/api/student/password', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.changePassword);
+  console.log('Student routes added');
+  
+  console.log('All routes registered successfully');
 } catch (error) {
   console.error('Error registering routes:', error);
   // 即使路由注册失败，也要确保服务能够启动
