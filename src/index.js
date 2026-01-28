@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/serve-static';
-import { rateLimit } from 'hono/rate-limit';
 import authController from './controllers/auth.js';
 import studentController from './controllers/student.js';
 import teacherController from './controllers/teacher.js';
@@ -21,20 +20,6 @@ const app = new Hono();
 
 // 中间件配置
 app.use('*', cors());
-
-// 速率限制中间件
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100, // 每个IP在windowMs时间内最多请求100次
-  message: {
-    error: '请求过于频繁，请稍后再试'
-  },
-  skip: (c) => {
-    // 跳过静态文件的速率限制
-    return c.req.path.startsWith('/static') || c.req.path === '/';
-  }
-});
-app.use('*', limiter);
 
 // 根路径
 app.get('/', (c) => {
@@ -62,24 +47,41 @@ const ROLES = {
 
 // 注册路由
 try {
-  console.log('Registering routes...');
-  
-  // 测试路由
-  app.post('/test/login', (c) => {
-    return c.json({ test: 'login route works' });
-  });
-  console.log('Test route added');
-  
-  // 认证路由
-  console.log('Adding auth routes...');
-  app.post('/api/auth/register', authController.register);
-  app.post('/api/auth/login', authController.login);
-  app.post('/api/auth/refresh', authController.refreshToken);
-  app.post('/api/auth/logout', authController.logout);
-  app.get('/api/auth/me', authMiddleware, authController.getCurrentUser);
-  console.log('Auth routes added');
-  
-  // 学生路由
+    console.log('Registering routes...');
+    
+    // 为 /api/ 路径添加路由处理
+    app.get('/api/', (c) => {
+      return c.json({
+        message: '教培系统后端API',
+        version: '1.0.0',
+        endpoints: {
+          auth: '/api/auth/*',
+          student: '/api/student/*',
+          teacher: '/api/teacher/*',
+          staff: '/api/staff/*',
+          admin: '/api/admin/*'
+        },
+        documentation: '请参考API文档使用各端点'
+      });
+    });
+    console.log('API root route added');
+    
+    // 测试路由
+    app.post('/test/login', (c) => {
+      return c.json({ test: 'login route works' });
+    });
+    console.log('Test route added');
+    
+    // 认证路由
+    console.log('Adding auth routes...');
+    app.post('/api/auth/register', authController.register);
+    app.post('/api/auth/login', authController.login);
+    app.post('/api/auth/refresh', authController.refreshToken);
+    app.post('/api/auth/logout', authController.logout);
+    app.get('/api/auth/me', authMiddleware, authController.getCurrentUser);
+    console.log('Auth routes added');
+    
+    // 学生路由
     console.log('Adding student routes...');
     app.get('/api/student/dashboard', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getDashboard);
     app.get('/api/student/courses/available', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getAvailableCourses);
@@ -168,22 +170,22 @@ try {
     app.get('/api/admin/stats', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getSystemStats);
     console.log('Admin routes added');
     
-    console.log('All routes registered successfully');
-  
-  // 静态文件服务
-  console.log('Adding static file serving...');
-  app.use('/static', serveStatic({
-    root: './public'
-  }));
-  console.log('Static file serving added');
-  
-  // 后台管理面板
-  console.log('Adding admin panel...');
-  app.get('*', serveStatic({
-    root: './public',
-    path: '/index.html'
-  }));
-  console.log('Admin panel added');
+    console.log('All API routes registered successfully');
+    
+    // 静态文件服务
+    console.log('Adding static file serving...');
+    app.use('/static', serveStatic({
+      root: './public'
+    }));
+    console.log('Static file serving added');
+    
+    // 后台管理面板 - 根路径
+    console.log('Adding admin panel...');
+    app.get('/', serveStatic({
+      root: './public',
+      path: '/index.html'
+    }));
+    console.log('Admin panel added');
 } catch (error) {
   console.error('Error registering routes:', error);
   // 即使路由注册失败，也要确保服务能够启动
