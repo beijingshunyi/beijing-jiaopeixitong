@@ -1,6 +1,10 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/serve-static';
+import dotenv from 'dotenv';
+
+// 加载环境变量
+dotenv.config();
 import authController from './controllers/auth.js';
 import studentController from './controllers/student.js';
 import teacherController from './controllers/teacher.js';
@@ -136,6 +140,11 @@ try {
     app.get('/api/staff/students', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getStudents);
     // 评价管理
     app.get('/api/staff/evaluations', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getEvaluations);
+    // 课程管理
+    app.get('/api/staff/courses', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getCourses);
+    app.post('/api/staff/courses', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.createCourse);
+    app.put('/api/staff/courses/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.updateCourse);
+    app.delete('/api/staff/courses/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.deleteCourse);
     console.log('Staff routes added');
     
     // Admin路由
@@ -161,281 +170,54 @@ try {
     
     console.log('All API routes registered successfully');
     
-    // 静态文件服务
+    // 静态文件服务 - 提供管理面板
     console.log('Adding static file serving...');
-    app.use('/static', serveStatic({
-      root: './public'
+    app.use('/*', serveStatic({
+      root: './public',
+      rewriteRequestPath: (path) => {
+        // 如果是根路径，重定向到admin.html
+        if (path === '/') return '/admin.html';
+        // 否则使用原始路径
+        return path;
+      }
     }));
     console.log('Static file serving added');
     
-    // 后台管理面板 - 根路径
+    // 后台管理面板 - 根路径（备用）
     console.log('Adding admin panel...');
     app.get('/', (c) => {
       return c.html(
-        `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>北京青翎舞蹈艺术中心 - 管理系统</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Microsoft YaHei', sans-serif; background: #f8f9fa; color: #333; }
-        .sidebar { position: fixed; left: 0; top: 0; width: 250px; height: 100vh; background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 20px 0; z-index: 1000; }
-        .sidebar-header { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar-header h1 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-        .sidebar-header p { font-size: 14px; opacity: 0.8; }
-        .nav-menu { list-style: none; margin-top: 20px; }
-        .nav-menu li { margin-bottom: 5px; }
-        .nav-menu a { display: block; padding: 12px 20px; color: rgba(255,255,255,0.8); text-decoration: none; transition: all 0.3s ease; font-size: 14px; border-left: 3px solid transparent; }
-        .nav-menu a:hover { background: rgba(255,255,255,0.1); color: white; border-left-color: #3498db; transform: translateX(5px); }
-        .nav-menu a.active { background: rgba(52,152,219,0.2); color: white; border-left-color: #3498db; }
-        .main-content { margin-left: 250px; min-height: 100vh; background: #f8f9fa; }
-        .top-nav { background: white; padding: 15px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
-        .top-nav h2 { font-size: 20px; color: #2c3e50; font-weight: 600; }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .user-info span { color: #666; font-size: 14px; }
-        .user-info button { padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
-        .content { padding: 20px; }
-        .dashboard { margin-bottom: 20px; }
-        .dashboard h3 { font-size: 16px; color: #2c3e50; margin-bottom: 15px; font-weight: 600; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 3px solid #3498db; }
-        .stat-card h4 { font-size: 13px; color: #7f8c8d; margin-bottom: 10px; text-transform: uppercase; }
-        .stat-card p { font-size: 24px; font-weight: 700; color: #2c3e50; }
-        .stat-card.dance { border-top-color: #e74c3c; }
-        .stat-card.course { border-top-color: #2ecc71; }
-        .stat-card.attendance { border-top-color: #f39c12; }
-        .stat-card.revenue { border-top-color: #9b59b6; }
-        .api-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .api-section h3 { font-size: 16px; color: #2c3e50; margin-bottom: 15px; font-weight: 600; }
-        .api-info { background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 3px solid #3498db; margin-bottom: 20px; }
-        .api-info h4 { font-size: 14px; color: #2c3e50; margin-bottom: 8px; }
-        .api-info p { font-size: 13px; color: #6c757d; margin-bottom: 6px; }
-        .api-endpoints { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
-        .endpoint-card { background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 3px solid #3498db; }
-        .endpoint-card h5 { font-size: 13px; color: #2c3e50; margin-bottom: 6px; font-weight: 600; }
-        .endpoint-card p { font-size: 12px; color: #6c757d; }
-        .copyright { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 30px 20px; margin-top: 30px; }
-        .copyright-content { max-width: 1000px; margin: 0 auto; }
-        .copyright-header { text-align: center; margin-bottom: 20px; }
-        .copyright-header h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-        .copyright-header p { font-size: 13px; opacity: 0.8; }
-        .copyright-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .info-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #3498db; text-transform: uppercase; }
-        .info-item p { font-size: 13px; line-height: 1.5; opacity: 0.8; }
-        .copyright-footer { text-align: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .copyright-footer p { font-size: 12px; opacity: 0.7; }
-        .tab-content { margin-bottom: 20px; }
-        .tab-pane { display: none; }
-        .tab-pane.active { display: block; }
-        @media (max-width: 768px) { .sidebar { width: 200px; } .main-content { margin-left: 200px; } .content { padding: 15px; } .stats-grid { grid-template-columns: 1fr; } }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h1>北京青翎舞蹈艺术中心</h1>
-            <p>管理系统</p>
-        </div>
-        <ul class="nav-menu">
-            <li><a href="#" class="active" data-tab="dashboard">首页仪表盘</a></li>
-            <li><a href="#" data-tab="students">学员管理</a></li>
-            <li><a href="#" data-tab="courses">课程管理</a></li>
-            <li><a href="#" data-tab="attendance">考勤管理</a></li>
-            <li><a href="#" data-tab="finance">财务管理</a></li>
-            <li><a href="#" data-tab="reports">统计报表</a></li>
-            <li><a href="#" data-tab="settings">系统设置</a></li>
-            <li><a href="#" data-tab="api-test">API测试工具</a></li>
-        </ul>
-    </div>
-    
-    <div class="main-content">
-        <div class="top-nav">
-            <h2>北京青翎舞蹈艺术中心</h2>
-            <div class="user-info">
-                <span>管理员</span>
-                <button>退出登录</button>
-            </div>
-        </div>
-        
-        <div class="content">
-            <div class="tab-content">
-                <div id="dashboard" class="tab-pane active">
-                    <div class="dashboard">
-                        <h3>系统概览</h3>
-                        <div class="stats-grid">
-                            <div class="stat-card dance">
-                                <h4>总学员数</h4>
-                                <p>128</p>
-                            </div>
-                            <div class="stat-card course">
-                                <h4>总课程数</h4>
-                                <p>45</p>
-                            </div>
-                            <div class="stat-card attendance">
-                                <h4>今日考勤</h4>
-                                <p>89</p>
-                            </div>
-                            <div class="stat-card revenue">
-                                <h4>总收入</h4>
-                                <p>¥12,580</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="api-section">
-                        <h3>API接口信息</h3>
-                        <div class="api-info">
-                            <h4>北京青翎舞蹈艺术中心管理系统API</h4>
-                            <p>版本: 1.0.0</p>
-                            <p>请参考以下API端点进行系统操作</p>
-                        </div>
-                        
-                        <div class="api-endpoints">
-                            <div class="endpoint-card">
-                                <h5>认证接口</h5>
-                                <p>/api/auth/*</p>
-                            </div>
-                            <div class="endpoint-card">
-                                <h5>学员接口</h5>
-                                <p>/api/student/*</p>
-                            </div>
-                            <div class="endpoint-card">
-                                <h5>教师接口</h5>
-                                <p>/api/teacher/*</p>
-                            </div>
-                            <div class="endpoint-card">
-                                <h5>教务接口</h5>
-                                <p>/api/staff/*</p>
-                            </div>
-                            <div class="endpoint-card">
-                                <h5>管理员接口</h5>
-                                <p>/api/admin/*</p>
-                            </div>
-                            <div class="endpoint-card">
-                                <h5>健康检查</h5>
-                                <p>/health</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="students" class="tab-pane">
-                    <div class="api-section">
-                        <h3>学员管理</h3>
-                        <p>学员管理功能开发中...</p>
-                        <p>即将支持：学员信息管理、报名管理、课程分配等功能</p>
-                    </div>
-                </div>
-                
-                <div id="courses" class="tab-pane">
-                    <div class="api-section">
-                        <h3>课程管理</h3>
-                        <p>课程管理功能开发中...</p>
-                        <p>即将支持：课程创建、编辑、排课、课程材料管理等功能</p>
-                    </div>
-                </div>
-                
-                <div id="attendance" class="tab-pane">
-                    <div class="api-section">
-                        <h3>考勤管理</h3>
-                        <p>考勤管理功能开发中...</p>
-                        <p>即将支持：学员打卡、考勤统计、请假管理等功能</p>
-                    </div>
-                </div>
-                
-                <div id="finance" class="tab-pane">
-                    <div class="api-section">
-                        <h3>财务管理</h3>
-                        <p>财务管理功能开发中...</p>
-                        <p>即将支持：收费管理、费用统计、财务报表等功能</p>
-                    </div>
-                </div>
-                
-                <div id="reports" class="tab-pane">
-                    <div class="api-section">
-                        <h3>统计报表</h3>
-                        <p>统计报表功能开发中...</p>
-                        <p>即将支持：学员统计、课程统计、收入统计等功能</p>
-                    </div>
-                </div>
-                
-                <div id="settings" class="tab-pane">
-                    <div class="api-section">
-                        <h3>系统设置</h3>
-                        <p>系统设置功能开发中...</p>
-                        <p>即将支持：用户管理、角色权限、系统配置等功能</p>
-                    </div>
-                </div>
-                
-                <div id="api-test" class="tab-pane">
-                    <div class="api-section">
-                        <h3>API测试工具</h3>
-                        <p>API测试工具功能开发中...</p>
-                        <p>即将支持：API接口测试、请求模拟、响应查看等功能</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="copyright">
-                <div class="copyright-content">
-                    <div class="copyright-header">
-                        <h3>北京青翎舞蹈艺术中心</h3>
-                        <p>由北京青翎文化传播有限公司全资所有并运营</p>
-                    </div>
-                    <div class="copyright-info">
-                        <div class="info-item">
-                            <h4>业务范围</h4>
-                            <p>专业成人舞蹈艺术教育 · 商业演出策划 · 企业年会编排</p>
-                        </div>
-                        <div class="info-item">
-                            <h4>联系我们</h4>
-                            <p>联系电话：15011258120<br>投诉举报：18363070253</p>
-                        </div>
-                        <div class="info-item">
-                            <h4>机构地址</h4>
-                            <p>北京市东城区崇文门北京商界A座8楼818</p>
-                        </div>
-                    </div>
-                    <div class="copyright-footer">
-                        <p>&copy; 2025 北京青翎文化传播有限公司 版权所有 All Rights Reserved</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        document.querySelectorAll('.nav-menu a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                document.querySelectorAll('.nav-menu a').forEach(item => {
-                    item.classList.remove('active');
-                });
-                document.querySelectorAll('.tab-pane').forEach(pane => {
-                    pane.classList.remove('active');
-                });
-                
-                this.classList.add('active');
-                const tabId = this.getAttribute('data-tab');
-                if (tabId) {
-                    const targetPane = document.getElementById(tabId);
-                    if (targetPane) {
-                        targetPane.classList.add('active');
-                    }
-                }
-            });
-        });
-    </script>
-</body>
-</html>`
+        '<!DOCTYPE html>\n' +
+        '<html lang="zh-CN">\n' +
+        '<head>\n' +
+        '    <meta charset="UTF-8">\n' +
+        '    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+        '    <title>北京青翎舞蹈艺术中心 - 管理系统</title>\n' +
+        '    <style>\n' +
+        '        * { margin: 0; padding: 0; box-sizing: border-box; }\n' +
+        '        body { font-family: "Microsoft YaHei", sans-serif; background: #f8f9fa; color: #333; }\n' +
+        '        .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }\n' +
+        '        .loading-logo { font-size: 24px; font-weight: bold; color: #3498db; margin-bottom: 20px; text-align: center; }\n' +
+        '        .loading-spinner { border: 4px solid rgba(52, 152, 219, 0.3); border-radius: 50%; border-top: 4px solid #3498db; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }\n' +
+        '        .loading-message { color: #7f8c8d; text-align: center; }\n' +
+        '        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n' +
+        '    </style>\n' +
+        '</head>\n' +
+        '<body>\n' +
+        '    <div class="loading-container">\n' +
+        '        <div class="loading-logo">北京青翎舞蹈艺术中心</div>\n' +
+        '        <div class="loading-spinner"></div>\n' +
+        '        <div class="loading-message">管理系统加载中...</div>\n' +
+        '    </div>\n' +
+        '    <script>\n' +
+        '        // 重定向到静态管理面板\n' +
+        '        window.location.href = "/admin.html";\n' +
+        '    </script>\n' +
+        '</body>\n' +
+        '</html>'
       );
     });
     console.log('Admin panel added');
-
-
 
 } catch (error) {
   console.error('Error registering routes:', error);
@@ -451,6 +233,20 @@ app.notFound((c) => {
 app.onError((err, c) => {
   console.error('Server error:', err);
   return c.json({ error: '服务器内部错误', details: process.env.NODE_ENV === 'development' ? err.message : undefined }, 500);
+});
+
+// 启动服务器
+const port = process.env.PORT || 3000;
+import('node:http').then(({ createServer }) => {
+  const server = createServer(app.fetch);
+  server.listen(port, () => {
+    console.log(`服务器已启动，监听端口 ${port}`);
+    console.log(`健康检查: http://localhost:${port}/health`);
+    console.log(`管理面板: http://localhost:${port}/`);
+  });
+  server.on('error', (err) => {
+    console.error('服务器启动失败:', err);
+  });
 });
 
 // 导出应用
