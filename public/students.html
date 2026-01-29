@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学员管理 - 青翎舞蹈艺术中心</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f7fa; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .header h1 { font-size: 28px; color: #2c3e50; margin-bottom: 10px; }
+        .header p { color: #7f8c8d; font-size: 14px; }
+
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+        .stat-card.blue::before { background: #3498db; }
+        .stat-card.green::before { background: #27ae60; }
+        .stat-card.orange::before { background: #f39c12; }
+        .stat-card.purple::before { background: #9b59b6; }
+        .stat-card h3 { font-size: 13px; color: #7f8c8d; margin-bottom: 10px; text-transform: uppercase; }
+        .stat-card .value { font-size: 32px; font-weight: 700; color: #2c3e50; }
+
+        .toolbar { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .toolbar-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .search-group { display: flex; gap: 10px; flex: 1; max-width: 500px; }
+        .search-group input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .search-group input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.3s; font-weight: 500; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,152,219,0.3); }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #229954; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #f8f9fa; }
+        th { padding: 15px; text-align: left; font-size: 13px; color: #2c3e50; font-weight: 600; border-bottom: 2px solid #e9ecef; }
+        td { padding: 15px; font-size: 14px; color: #495057; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #f8f9fa; }
+
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px; }
+        .pagination button { padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; }
+        .pagination button:hover:not(:disabled) { background: #3498db; color: white; }
+        .pagination button.active { background: #3498db; color: white; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { padding: 20px 25px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 18px; color: #2c3e50; }
+        .modal-close { background: none; border: none; font-size: 24px; color: #95a5a6; cursor: pointer; }
+        .modal-body { padding: 25px; }
+        .modal-footer { padding: 15px 25px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 10px; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #2c3e50; font-weight: 500; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .form-control:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+        .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+
+        .loading { text-align: center; padding: 40px; color: #7f8c8d; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #7f8c8d; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 学员管理</h1>
+            <p>管理学员信息、课程报名、缴费记录等</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="stats-bar">
+            <div class="stat-card blue">
+                <h3>总学员数</h3>
+                <div class="value" id="totalStudents">-</div>
+            </div>
+            <div class="stat-card green">
+                <h3>活跃学员</h3>
+                <div class="value" id="activeStudents">-</div>
+            </div>
+            <div class="stat-card orange">
+                <h3>本月新增</h3>
+                <div class="value" id="newStudents">-</div>
+            </div>
+            <div class="stat-card purple">
+                <h3>待处理</h3>
+                <div class="value" id="pendingStudents">-</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-row">
+                <div class="search-group">
+                    <input type="text" id="searchInput" placeholder="搜索学员姓名、邮箱、学号..." />
+                    <button class="btn btn-primary" onclick="searchStudents()">🔍 搜索</button>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success" onclick="openAddModal()">➕ 添加学员</button>
+                    <button class="btn btn-warning" onclick="refreshData()">🔄 刷新</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>姓名</th>
+                            <th>邮箱</th>
+                            <th>角色</th>
+                            <th>学院</th>
+                            <th>专业</th>
+                            <th>班级</th>
+                            <th>学号</th>
+                            <th>手机号</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <tr>
+                            <td colspan="11" class="loading">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑学员模态框 -->
+    <div class="modal" id="studentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">添加学员</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="studentForm" onsubmit="saveStudent(event)">
+                    <input type="hidden" id="studentId" />
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>姓名 *</label>
+                            <input type="text" class="form-control" id="studentName" required />
+                        </div>
+                        <div class="form-group">
+                            <label>邮箱 *</label>
+                            <input type="email" class="form-control" id="studentEmail" required />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>密码 *</label>
+                            <input type="password" class="form-control" id="studentPassword" />
+                            <small style="color: #7f8c8d;">编辑时留空表示不修改密码</small>
+                        </div>
+                        <div class="form-group">
+                            <label>手机号</label>
+                            <input type="tel" class="form-control" id="studentPhone" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>学号</label>
+                        <input type="text" class="form-control" id="studentNumber" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea class="form-control" id="studentNotes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="document.getElementById('studentForm').requestSubmit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API 配置
+        const API_BASE = 'https://beijing-jiaopeixitong.vercel.app/api';
+        let authToken = null;
+
+        // 全局变量
+        let students = [];
+        let currentPage = 1;
+        let pageSize = 10;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 检查登录状态
+            authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                showAlert('请先登录', 'danger');
+                // 这里应该跳转到登录页面
+                // window.location.href = '/login.html';
+                // 暂时使用测试token
+                await testLogin();
+            }
+
+            await loadStudents();
+            await loadStats();
+        });
+
+        // 测试登录（临时）
+        async function testLogin() {
+            try {
+                // 尝试使用测试账号登录
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'admin123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    showAlert('自动登录成功', 'success');
+                } else {
+                    showAlert('需要先创建管理员账号', 'info');
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+            }
+        }
+
+        // 加载学员列表
+        async function loadStudents() {
+            try {
+                showLoading();
+
+                const response = await fetch(`${API_BASE}/staff/students`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                students = data.students || [];
+                renderTable();
+                updatePagination();
+            } catch (error) {
+                console.error('加载学员失败:', error);
+                showError('加载学员数据失败: ' + error.message);
+                // 显示空状态
+                document.getElementById('studentTableBody').innerHTML =
+                    '<tr><td colspan="11" class="empty-state">暂无数据或加载失败</td></tr>';
+            }
+        }
+
+        // 渲染表格
+        function renderTable() {
+            const tbody = document.getElementById('studentTableBody');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = students.slice(start, end);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="empty-state">暂无学员数据</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pageData.map(student => `
+                <tr>
+                    <td>${student.id || '-'}</td>
+                    <td><strong>${student.name || '-'}</strong></td>
+                    <td>${student.email || '-'}</td>
+                    <td><span class="badge badge-info">${getRoleName(student.role_id)}</span></td>
+                    <td>${student.college_id || '-'}</td>
+                    <td>${student.major_id || '-'}</td>
+                    <td>${student.class_id || '-'}</td>
+                    <td>${student.student_id || '-'}</td>
+                    <td>${student.phone || '-'}</td>
+                    <td>${formatDate(student.created_at)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick='editStudent(${JSON.stringify(student).replace(/'/g, "&apos;")})'>编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteStudent('${student.id}')">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 更新分页
+        function updatePagination() {
+            const totalPages = Math.ceil(students.length / pageSize);
+            const pagination = document.getElementById('pagination');
+
+            let html = `
+                <button onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>首页</button>
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                <span>第 ${currentPage} / ${totalPages || 1} 页 (共 ${students.length} 条)</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>下一页</button>
+                <button onclick="changePage(${totalPages})" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>末页</button>
+            `;
+
+            pagination.innerHTML = html;
+        }
+
+        // 切换页码
+        function changePage(page) {
+            const totalPages = Math.ceil(students.length / pageSize);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderTable();
+            updatePagination();
+        }
+
+        // 搜索学员
+        function searchStudents() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            if (!keyword) {
+                loadStudents();
+                return;
+            }
+
+            const filtered = students.filter(s =>
+                (s.name && s.name.toLowerCase().includes(keyword)) ||
+                (s.email && s.email.toLowerCase().includes(keyword)) ||
+                (s.student_id && s.student_id.toLowerCase().includes(keyword)) ||
+                (s.phone && s.phone.includes(keyword))
+            );
+
+            students = filtered;
+            currentPage = 1;
+            renderTable();
+            updatePagination();
+        }
+
+        // 打开添加模态框
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = '添加学员';
+            document.getElementById('studentForm').reset();
+            document.getElementById('studentId').value = '';
+            document.getElementById('studentPassword').required = true;
+            document.getElementById('studentModal').classList.add('show');
+        }
+
+        // 编辑学员
+        function editStudent(student) {
+            document.getElementById('modalTitle').textContent = '编辑学员';
+            document.getElementById('studentId').value = student.id;
+            document.getElementById('studentName').value = student.name || '';
+            document.getElementById('studentEmail').value = student.email || '';
+            document.getElementById('studentPhone').value = student.phone || '';
+            document.getElementById('studentNumber').value = student.student_id || '';
+            document.getElementById('studentPassword').required = false;
+            document.getElementById('studentPassword').value = '';
+            document.getElementById('studentModal').classList.add('show');
+        }
+
+        // 保存学员
+        async function saveStudent(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('studentId').value;
+            const name = document.getElementById('studentName').value;
+            const email = document.getElementById('studentEmail').value;
+            const password = document.getElementById('studentPassword').value;
+            const phone = document.getElementById('studentPhone').value;
+            const studentNumber = document.getElementById('studentNumber').value;
+
+            try {
+                const url = id ? `${API_BASE}/admin/users/${id}` : `${API_BASE}/admin/users`;
+                const method = id ? 'PUT' : 'POST';
+
+                const body = {
+                    name,
+                    email,
+                    phone,
+                    student_id: studentNumber,
+                    role_id: 4 // 学生角色
+                };
+
+                if (!id || password) {
+                    body.password = password;
+                }
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '保存失败');
+                }
+
+                showAlert(id ? '更新成功！' : '添加成功！', 'success');
+                closeModal();
+                await loadStudents();
+                await loadStats();
+            } catch (error) {
+                console.error('保存学员失败:', error);
+                showAlert('保存失败: ' + error.message, 'danger');
+            }
+        }
+
+        // 删除学员
+        async function deleteStudent(id) {
+            if (!confirm('确定要删除这个学员吗？此操作不可恢复！')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/users/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('删除失败');
+                }
+
+                showAlert('删除成功！', 'success');
+                await loadStudents();
+                await loadStats();
+            } catch (error) {
+                console.error('删除学员失败:', error);
+                showAlert('删除失败: ' + error.message, 'danger');
+            }
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('studentModal').classList.remove('show');
+        }
+
+        // 刷新数据
+        async function refreshData() {
+            await loadStudents();
+            await loadStats();
+            showAlert('数据已刷新', 'success');
+        }
+
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                // 从学员列表计算统计
+                const total = students.length;
+                const active = students.filter(s => s.role_id === 4).length;
+
+                // 计算本月新增
+                const now = new Date();
+                const thisMonth = students.filter(s => {
+                    if (!s.created_at) return false;
+                    const date = new Date(s.created_at);
+                    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                }).length;
+
+                document.getElementById('totalStudents').textContent = total;
+                document.getElementById('activeStudents').textContent = active;
+                document.getElementById('newStudents').textContent = thisMonth;
+                document.getElementById('pendingStudents').textContent = 0;
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+
+        // 工具函数
+        function getRoleName(roleId) {
+            const roles = { 1: '管理员', 2: '教务', 3: '教师', 4: '学生' };
+            return roles[roleId] || '未知';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN');
+        }
+
+        function showLoading() {
+            document.getElementById('studentTableBody').innerHTML =
+                '<tr><td colspan="11" class="loading">加载中...</td></tr>';
+        }
+
+        function showError(message) {
+            showAlert(message, 'danger');
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
