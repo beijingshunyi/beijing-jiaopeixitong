@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { serveStatic } from 'hono/serve-static';
 import dotenv from 'dotenv';
 
 // 加载环境变量
@@ -195,21 +194,8 @@ try {
     app.get('/api/financial/export', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.exportFinancialReport);
     console.log('Financial routes added');
     console.log('All API routes registered successfully');
-    
-    // 静态文件服务 - 提供管理面板
-    console.log('Adding static file serving...');
-    app.use('/*', serveStatic({
-      root: './public',
-      rewriteRequestPath: (path) => {
-        // 如果是根路径，重定向到admin.html
-        if (path === '/') return '/admin.html';
-        // 否则使用原始路径
-        return path;
-      }
-    }));
-    console.log('Static file serving added');
-    
-    // 后台管理面板 - 根路径（备用）
+
+    // 后台管理面板 - 根路径
     console.log('Adding admin panel...');
     app.get('/', (c) => {
       return c.html(
