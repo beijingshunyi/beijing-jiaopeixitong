@@ -235,19 +235,21 @@ app.onError((err, c) => {
   return c.json({ error: '服务器内部错误', details: process.env.NODE_ENV === 'development' ? err.message : undefined }, 500);
 });
 
-// 启动服务器
-const port = process.env.PORT || 3000;
-import('node:http').then(({ createServer }) => {
-  const server = createServer(app.fetch);
-  server.listen(port, () => {
-    console.log(`服务器已启动，监听端口 ${port}`);
-    console.log(`健康检查: http://localhost:${port}/health`);
-    console.log(`管理面板: http://localhost:${port}/`);
-  });
-  server.on('error', (err) => {
-    console.error('服务器启动失败:', err);
-  });
-});
-
-// 导出应用
+// 导出应用（Vercel需要默认导出）
 export default app;
+
+// 仅在本地运行时启动服务器
+if (process.env.NODE_ENV !== 'production') {
+  const port = process.env.PORT || 3000;
+  import('node:http').then(({ createServer }) => {
+    const server = createServer(app.fetch);
+    server.listen(port, () => {
+      console.log(`服务器已启动，监听端口 ${port}`);
+      console.log(`健康检查: http://localhost:${port}/health`);
+      console.log(`管理面板: http://localhost:${port}/`);
+    });
+    server.on('error', (err) => {
+      console.error('服务器启动失败:', err);
+    });
+  });
+}
