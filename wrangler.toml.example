@@ -1,0 +1,22 @@
+name = "jiaopeifuwuqi"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+NODE_ENV = "production"
+
+# 注意：敏感信息应该使用 Cloudflare Workers Secrets 管理
+# 使用以下命令设置 secrets:
+# wrangler secret put SUPABASE_URL
+# wrangler secret put SUPABASE_ANON_KEY
+# wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+# wrangler secret put JWT_SECRET
+# wrangler secret put PORT
+
+# 或者在本地开发时，可以临时添加到 [vars] 中（不要提交到Git）:
+# SUPABASE_URL = "your-supabase-url"
+# SUPABASE_ANON_KEY = "your-anon-key"
+# SUPABASE_SERVICE_ROLE_KEY = "your-service-role-key"
+# JWT_SECRET = "your-jwt-secret"
+# PORT = "3000"

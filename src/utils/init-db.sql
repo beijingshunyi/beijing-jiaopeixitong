@@ -214,3 +214,84 @@ CREATE INDEX IF NOT EXISTS idx_teaching_plans_course_id ON teaching_plans(course
 
 -- 培养方案表索引
 CREATE INDEX IF NOT EXISTS idx_training_programs_major_id ON training_programs(major_id);
+
+-- 创建财务记录表
+CREATE TABLE IF NOT EXISTS financial_records (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(20) NOT NULL, -- income, expense
+  category VARCHAR(50) NOT NULL, -- tuition, salary, rent, utilities, etc.
+  amount NUMERIC(10,2) NOT NULL,
+  description TEXT,
+  reference_id UUID, -- 关联的用户ID或其他记录ID
+  reference_type VARCHAR(50), -- user, course, etc.
+  payment_method VARCHAR(50), -- cash, wechat, alipay, bank_transfer
+  status VARCHAR(20) DEFAULT 'completed', -- pending, completed, cancelled
+  created_by UUID REFERENCES user_profiles(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 创建缴费记录表
+CREATE TABLE IF NOT EXISTS payments (
+  id SERIAL PRIMARY KEY,
+  student_id UUID REFERENCES user_profiles(id),
+  course_id INTEGER REFERENCES courses(id),
+  amount NUMERIC(10,2) NOT NULL,
+  payment_type VARCHAR(50) NOT NULL, -- tuition, material, other
+  payment_method VARCHAR(50) NOT NULL, -- cash, wechat, alipay, bank_transfer
+  payment_date TIMESTAMP DEFAULT NOW(),
+  status VARCHAR(20) DEFAULT 'completed', -- pending, completed, cancelled, refunded
+  transaction_id VARCHAR(100), -- 第三方支付交易号
+  receipt_number VARCHAR(50),
+  notes TEXT,
+  created_by UUID REFERENCES user_profiles(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 创建退款记录表
+CREATE TABLE IF NOT EXISTS refunds (
+  id SERIAL PRIMARY KEY,
+  payment_id INTEGER REFERENCES payments(id),
+  amount NUMERIC(10,2) NOT NULL,
+  reason TEXT,
+  refund_method VARCHAR(50),
+  refund_date TIMESTAMP DEFAULT NOW(),
+  status VARCHAR(20) DEFAULT 'pending', -- pending, completed, rejected
+  processed_by UUID REFERENCES user_profiles(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 创建财务统计表（按月汇总）
+CREATE TABLE IF NOT EXISTS financial_summaries (
+  id SERIAL PRIMARY KEY,
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL,
+  total_income NUMERIC(12,2) DEFAULT 0,
+  total_expense NUMERIC(12,2) DEFAULT 0,
+  net_profit NUMERIC(12,2) DEFAULT 0,
+  student_count INTEGER DEFAULT 0,
+  course_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(year, month)
+);
+
+-- 财务表索引
+CREATE INDEX IF NOT EXISTS idx_financial_records_type ON financial_records(type);
+CREATE INDEX IF NOT EXISTS idx_financial_records_category ON financial_records(category);
+CREATE INDEX IF NOT EXISTS idx_financial_records_created_at ON financial_records(created_at);
+CREATE INDEX IF NOT EXISTS idx_financial_records_reference_id ON financial_records(reference_id);
+
+CREATE INDEX IF NOT EXISTS idx_payments_student_id ON payments(student_id);
+CREATE INDEX IF NOT EXISTS idx_payments_course_id ON payments(course_id);
+CREATE INDEX IF NOT EXISTS idx_payments_payment_date ON payments(payment_date);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+CREATE INDEX IF NOT EXISTS idx_payments_payment_type ON payments(payment_type);
+
+CREATE INDEX IF NOT EXISTS idx_refunds_payment_id ON refunds(payment_id);
+CREATE INDEX IF NOT EXISTS idx_refunds_status ON refunds(status);
+CREATE INDEX IF NOT EXISTS idx_refunds_refund_date ON refunds(refund_date);
+
+CREATE INDEX IF NOT EXISTS idx_financial_summaries_year_month ON financial_summaries(year, month);

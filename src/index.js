@@ -10,6 +10,7 @@ import studentController from './controllers/student.js';
 import teacherController from './controllers/teacher.js';
 import staffController from './controllers/staff.js';
 import adminController from './controllers/admin.js';
+import financialController from './controllers/financial.js';
 import { authMiddleware, roleMiddleware } from './middleware/auth.js';
 
 // 添加环境变量检查
@@ -23,7 +24,18 @@ console.log('Environment variables loaded:', {
 const app = new Hono();
 
 // 中间件配置
-app.use('*', cors());
+// 中间件配置
+app.use('*', async (c, next) => {
+  c.header('Access-Control-Allow-Origin', '*');
+  c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (c.req.method === 'OPTIONS') {
+    return c.text('', 204);
+  }
+  
+  await next();
+});
 
 // 健康检查
 app.get('/health', (c) => {
@@ -168,6 +180,20 @@ try {
     app.get('/api/admin/stats', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getSystemStats);
     console.log('Admin routes added');
     
+    // 财务管理路由
+    console.log('Adding financial routes...');
+    // 财务统计
+    app.get('/api/financial/stats', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getFinancialStats);
+    app.get('/api/financial/monthly/:year/:month', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getMonthlyStats);
+    // 缴费管理
+    app.post('/api/financial/payments', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.createPayment);
+    app.get('/api/financial/payments', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getPayments);
+    // 退款管理
+    app.post('/api/financial/refunds', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.processRefund);
+    app.get('/api/financial/refunds', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getRefunds);
+    // 报表导出
+    app.get('/api/financial/export', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.exportFinancialReport);
+    console.log('Financial routes added');
     console.log('All API routes registered successfully');
     
     // 静态文件服务 - 提供管理面板

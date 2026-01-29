@@ -2,10 +2,10 @@ import { sign, verify } from 'hono/jwt';
 import { supabaseService } from './supabase.js';
 
 // 生成JWT令牌
-const generateToken = (userId, roleId) => {
-  return sign(
-    { 
-      sub: userId, 
+const generateToken = async (userId, roleId) => {
+  return await sign(
+    {
+      sub: userId,
       role: roleId,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24小时过期
@@ -53,7 +53,7 @@ const register = async (userData) => {
     }
 
     // 3. 生成JWT令牌
-    const token = generateToken(authUser.user.id, userData.role_id);
+    const token = await generateToken(authUser.user.id, userData.role_id);
 
     return {
       user: userProfile,
@@ -90,7 +90,7 @@ const login = async (email, password) => {
     }
 
     // 3. 生成JWT令牌
-    const token = generateToken(authResult.user.id, userProfile.role_id);
+    const token = await generateToken(authResult.user.id, userProfile.role_id);
 
     return {
       user: userProfile,
@@ -126,7 +126,7 @@ const refreshToken = async (refreshToken) => {
     }
 
     // 生成新的JWT令牌
-    const token = generateToken(authResult.user.id, userProfile.role_id);
+    const token = await generateToken(authResult.user.id, userProfile.role_id);
 
     return {
       user: userProfile,

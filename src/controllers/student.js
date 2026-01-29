@@ -19,20 +19,24 @@ const getDashboard = async (c) => {
       .eq('student_id', studentId);
 
     // 3. 获取平均成绩
-    const { data: avgGrade, error: gradeError } = await supabaseService
+    const { data: gradeRecords, error: gradeError } = await supabaseService
       .from('grades')
-      .select('AVG(score) as average')
-      .eq('student_id', studentId)
-      .single();
+      .select('score')
+      .eq('student_id', studentId);
 
     if (courseError || completedError || gradeError) {
       throw new Error('获取统计数据失败');
     }
 
+    // 计算平均成绩
+    const averageScore = gradeRecords && gradeRecords.length > 0
+      ? gradeRecords.reduce((sum, record) => sum + (record.score || 0), 0) / gradeRecords.length
+      : 0;
+
     return c.json({
       enrolledCourses: courseCount.length,
       completedCourses: completedCourses.length,
-      averageScore: avgGrade.average || 0
+      averageScore: averageScore.toFixed(2)
     });
   } catch (error) {
     return c.json({ error: error.message }, 400);
@@ -91,7 +95,7 @@ const enrollCourse = async (c) => {
       .select('id')
       .eq('student_id', studentId)
       .eq('course_id', courseId)
-      .single();
+      .maybeSingle();
 
     if (existingSelection) {
       throw new Error('已选该课程');
@@ -104,17 +108,32 @@ const enrollCourse = async (c) => {
       .eq('course_id', courseId)
       .eq('status', 'enrolled');
 
-    if (currentEnrollments.length >= course.capacity) {
+    if (enrollmentError) {
+      throw new Error('检查课程容量失败');
+    }
+
+    if (currentEnrollments && currentEnrollments.length >= course.capacity) {
       throw new Error('课程已达到最大容量');
     }
 
-    // 4. 执行选课
+    // 4. 执行选课（初始化剩余课时为课程总课时）
+    const { data: courseInfo, error: courseInfoError } = await supabaseService
+      .from('courses')
+      .select('hours')
+      .eq('id', courseId)
+      .single();
+
+    if (courseInfoError) {
+      throw new Error('获取课程信息失败');
+    }
+
     const { data: newSelection, error: newSelectionError } = await supabaseService
       .from('course_selections')
       .insert({
         student_id: studentId,
         course_id: courseId,
-        status: 'enrolled'
+        status: 'enrolled',
+        remaining_hours: courseInfo.hours
       })
       .select()
       .single();
@@ -283,7 +302,7 @@ const submitEvaluation = async (c) => {
       .select('id')
       .eq('student_id', studentId)
       .eq('course_id', courseId)
-      .single();
+      .maybeSingle();
 
     if (existingEval) {
       throw new Error('已评价该课程');
@@ -433,7 +452,7 @@ const checkIn = async (c) => {
     // 1. 验证课程是否存在且学生已报名
     const { data: courseSelection, error: selectionError } = await supabaseService
       .from('course_selections')
-      .select('id, courses(id, name, hours)')
+      .select('id, remaining_hours, course_id')
       .eq('student_id', studentId)
       .eq('course_id', courseId)
       .eq('status', 'enrolled')
@@ -441,6 +460,17 @@ const checkIn = async (c) => {
 
     if (selectionError || !courseSelection) {
       throw new Error('未报名该课程');
+    }
+
+    // 获取课程信息
+    const { data: course, error: courseError } = await supabaseService
+      .from('courses')
+      .select('id, name, hours')
+      .eq('id', courseId)
+      .single();
+
+    if (courseError || !course) {
+      throw new Error('课程不存在');
     }
 
     // 2. 检查今天是否已经打卡
@@ -451,7 +481,7 @@ const checkIn = async (c) => {
       .eq('student_id', studentId)
       .eq('course_id', courseId)
       .eq('date', today)
-      .single();
+      .maybeSingle();
 
     if (existingCheckIn) {
       throw new Error('今日已打卡');
@@ -477,10 +507,16 @@ const checkIn = async (c) => {
     }
 
     // 4. 扣除课时（简化版：每次打卡扣除1课时）
+    const currentRemainingHours = courseSelection.remaining_hours !== null
+      ? courseSelection.remaining_hours
+      : course.hours;
+
+    const newRemainingHours = Math.max(0, currentRemainingHours - 1);
+
     const { error: updateError } = await supabaseService
       .from('course_selections')
       .update({
-        remaining_hours: (courseSelection.remaining_hours || courseSelection.courses.hours) - 1
+        remaining_hours: newRemainingHours
       })
       .eq('id', courseSelection.id);
 
@@ -565,11 +601,11 @@ const getRemainingHours = async (c) => {
     }
 
     const courseHours = courses.map(course => ({
-      id: course.courses.id,
+      id: course.id,
       name: course.courses.name,
       code: course.courses.code,
       totalHours: course.courses.hours,
-      remainingHours: course.remaining_hours || course.courses.hours
+      remainingHours: course.remaining_hours !== null ? course.remaining_hours : course.courses.hours
     }));
 
     return c.json({ courses: courseHours });
