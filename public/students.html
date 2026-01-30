@@ -207,7 +207,7 @@
 
     <script>
         // API 配置
-        const API_BASE = 'https://beijing-jiaopeixitong.vercel.app/api';
+        const API_BASE = 'http://localhost:3000/api';
         let authToken = null;
 
         // 全局变量
@@ -217,23 +217,32 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('=== 前端初始化开始 ===');
+            console.log('API_BASE:', API_BASE);
+            
             // 检查登录状态
             authToken = localStorage.getItem('authToken');
+            console.log('从本地存储获取的token:', authToken ? '存在' : '不存在');
+            
             if (!authToken) {
+                console.log('未找到token，执行测试登录...');
                 showAlert('请先登录', 'danger');
-                // 这里应该跳转到登录页面
-                // window.location.href = '/login.html';
                 // 暂时使用测试token
                 await testLogin();
             }
 
+            console.log('登录完成，开始加载数据...');
             await loadStudents();
             await loadStats();
+            console.log('=== 前端初始化完成 ===');
         });
 
         // 测试登录（临时）
         async function testLogin() {
             try {
+                console.log('=== 测试登录开始 ===');
+                console.log('登录URL:', `${API_BASE}/auth/login`);
+                
                 // 尝试使用测试账号登录
                 const response = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
@@ -244,16 +253,26 @@
                     })
                 });
 
+                console.log('登录响应状态:', response.status);
+                console.log('登录响应状态文本:', response.statusText);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('登录成功响应:', data);
                     authToken = data.token;
                     localStorage.setItem('authToken', authToken);
+                    console.log('Token保存成功:', authToken ? '是' : '否');
                     showAlert('自动登录成功', 'success');
                 } else {
+                    const errorData = await response.json().catch(e => ({}));
+                    console.log('登录失败响应:', errorData);
                     showAlert('需要先创建管理员账号', 'info');
                 }
             } catch (error) {
                 console.error('登录失败:', error);
+                showAlert('登录失败: ' + error.message, 'danger');
+            } finally {
+                console.log('=== 测试登录结束 ===');
             }
         }
 

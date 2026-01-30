@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试</title>
+</head>
+<body>
+    <h1>API测试页面</h1>
+    <button onclick="testAPI()">测试API连接</button>
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        function log(message) {
+            console.log(message);
+            document.getElementById('result').innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function testAPI() {
+            log('=== 开始测试API ===');
+            log('API基础URL: ' + API_BASE);
+            
+            try {
+                // 测试健康检查
+                log('\n1. 测试健康检查...');
+                const healthResponse = await fetch('http://localhost:3000/health');
+                log('健康检查状态: ' + healthResponse.status);
+                const healthData = await healthResponse.text();
+                log('健康检查响应: ' + healthData);
+                
+                // 测试登录
+                log('\n2. 测试登录...');
+                const loginResponse = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                log('登录状态: ' + loginResponse.status);
+                const loginData = await loginResponse.json();
+                log('登录响应: ' + JSON.stringify(loginData));
+                
+                if (loginData.token) {
+                    log('\n3. 测试学生列表...');
+                    const studentsResponse = await fetch(`${API_BASE}/staff/students`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + loginData.token
+                        }
+                    });
+                    
+                    log('学生列表状态: ' + studentsResponse.status);
+                    const studentsData = await studentsResponse.json();
+                    log('学生列表响应: ' + JSON.stringify(studentsData));
+                }
+                
+            } catch (error) {
+                log('错误: ' + error.message);
+                console.error('详细错误:', error);
+            } finally {
+                log('\n=== 测试完成 ===');
+            }
+        }
+        
+        // 页面加载时自动测试
+        window.onload = function() {
+            log('页面已加载，点击按钮开始测试');
+        };
+    </script>
+</body>
+</html>

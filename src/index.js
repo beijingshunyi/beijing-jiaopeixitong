@@ -1,9 +1,18 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, extname } from 'node:path';
+import { readFileSync, statSync } from 'node:fs';
 
 // 加载环境变量
 dotenv.config();
+
+// 静态文件路径配置
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const publicDir = join(__dirname, '..', 'public');
+
 import authController from './controllers/auth.js';
 import studentController from './controllers/student.js';
 import teacherController from './controllers/teacher.js';
@@ -23,7 +32,65 @@ console.log('Environment variables loaded:', {
 const app = new Hono();
 
 // 中间件配置
-// 中间件配置
+// 自定义静态文件服务中间件
+app.use('/*', async (c, next) => {
+  const filePath = c.req.path;
+  console.log('静态文件请求:', filePath);
+  
+  // 处理根路径
+  if (filePath === '/') {
+    const indexPath = join(publicDir, 'index.html');
+    try {
+      const stats = statSync(indexPath);
+      if (stats.isFile()) {
+        console.log('返回index.html');
+        c.header('Content-Type', 'text/html');
+        const content = readFileSync(indexPath);
+        return c.body(content);
+      }
+    } catch (err) {
+      console.error('读取index.html失败:', err.message);
+    }
+  }
+  
+  // 处理其他静态文件
+  const relativePath = filePath.replace(/^\//, '');
+  const fullPath = join(publicDir, relativePath);
+  console.log('完整文件路径:', fullPath);
+  
+  try {
+    // 检查文件是否存在
+    const stats = statSync(fullPath);
+    if (stats.isFile()) {
+      console.log('文件存在，大小:', stats.size, '字节');
+      // 根据文件扩展名设置Content-Type
+      const contentType = {
+        '.html': 'text/html',
+        '.css': 'text/css',
+        '.js': 'text/javascript',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.gif': 'image/gif'
+      }[extname(fullPath)] || 'application/octet-stream';
+      
+      console.log('Content-Type:', contentType);
+      c.header('Content-Type', contentType);
+      const content = readFileSync(fullPath);
+      console.log('返回文件内容，长度:', content.length, '字节');
+      return c.body(content);
+    } else {
+      console.log('路径不是文件:', fullPath);
+    }
+  } catch (err) {
+    console.error('静态文件服务错误:', err.message);
+  }
+  
+  console.log('继续处理其他路由');
+  await next();
+});
+
+// CORS中间件
 app.use('*', async (c, next) => {
   c.header('Access-Control-Allow-Origin', '*');
   c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
