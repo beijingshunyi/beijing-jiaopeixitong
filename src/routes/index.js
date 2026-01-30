@@ -4,6 +4,7 @@ import studentController from '../controllers/student.js';
 import teacherController from '../controllers/teacher.js';
 import staffController from '../controllers/staff.js';
 import adminController from '../controllers/admin.js';
+import financialController from '../controllers/financial.js';
 import { authMiddleware, roleMiddleware } from '../middleware/auth.js';
 
 const router = new Hono();
@@ -91,6 +92,16 @@ router.get('/staff/students', authMiddleware, roleMiddleware([ROLES.STAFF, ROLES
 // 评价管理
 router.get('/staff/evaluations', authMiddleware, roleMiddleware([ROLES.STAFF, ROLES.ADMIN]), staffController.getEvaluations);
 
+// 统计报表管理
+router.get('/staff/statistics/students', authMiddleware, roleMiddleware([ROLES.STAFF, ROLES.ADMIN]), staffController.getStudentStatistics);
+router.get('/staff/statistics/courses', authMiddleware, roleMiddleware([ROLES.STAFF, ROLES.ADMIN]), staffController.getCourseStatistics);
+router.get('/staff/statistics/teachers', authMiddleware, roleMiddleware([ROLES.STAFF, ROLES.ADMIN]), staffController.getTeacherStatistics);
+router.get('/staff/statistics/export', authMiddleware, roleMiddleware([ROLES.STAFF, ROLES.ADMIN]), staffController.exportStatisticsReport);
+
+// 财务统计报表
+router.get('/staff/statistics/financial', authMiddleware, roleMiddleware([ROLES.STAFF, ROLES.ADMIN]), financialController.getFinancialAnalysis);
+router.get('/staff/statistics/financial/export', authMiddleware, roleMiddleware([ROLES.STAFF, ROLES.ADMIN]), financialController.exportFinancialReport);
+
 // 管理员路由
 
 // 用户管理
@@ -113,5 +124,19 @@ router.post('/admin/users/roles/remove', authMiddleware, roleMiddleware([ROLES.A
 
 // 系统统计
 router.get('/admin/stats', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getSystemStats);
+
+// 系统设置路由
+router.get('/admin/settings/system', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getSystemSettings);
+router.put('/admin/settings/system', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.updateSystemSettings);
+router.get('/admin/settings/notification', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getNotificationSettings);
+router.put('/admin/settings/notification', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.updateNotificationSettings);
+router.get('/admin/settings/security', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getSecuritySettings);
+router.put('/admin/settings/security', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.updateSecuritySettings);
+
+// 系统日志和审计路由
+router.get('/admin/logs/system', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getSystemLogs);
+router.get('/admin/logs/audit', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getAuditLogs);
+router.post('/admin/logs/cleanup', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.cleanupSystemLogs);
+router.get('/admin/logs/activity', authMiddleware, roleMiddleware([ROLES.ADMIN]), adminController.getSystemActivityStats);
 
 export default router;

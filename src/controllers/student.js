@@ -614,6 +614,156 @@ const getRemainingHours = async (c) => {
   }
 };
 
+// 获取缴费记录
+const getPaymentRecords = async (c) => {
+  try {
+    const studentId = c.get('userProfile').id;
+    const { courseId, startDate, endDate } = c.req.query();
+
+    let query = supabaseService
+      .from('payments')
+      .select(`
+        id,
+        amount,
+        payment_type,
+        payment_method,
+        payment_date,
+        status,
+        transaction_id,
+        receipt_number,
+        notes,
+        courses(name, code)
+      `)
+      .eq('student_id', studentId);
+
+    if (courseId) {
+      query = query.eq('course_id', courseId);
+    }
+
+    if (startDate) {
+      query = query.gte('payment_date', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('payment_date', endDate);
+    }
+
+    const { data: payments, error } = await query.order('payment_date', { ascending: false });
+
+    if (error) {
+      throw new Error('获取缴费记录失败');
+    }
+
+    return c.json({ payments });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 提交申请
+const submitApplication = async (c) => {
+  try {
+    const studentId = c.get('userProfile').id;
+    const { type, content } = await c.req.json();
+
+    // 验证申请类型
+    const validTypes = ['leave', 'course_extension', 'other'];
+    if (!validTypes.includes(type)) {
+      throw new Error('无效的申请类型');
+    }
+
+    const { data: application, error } = await supabaseService
+      .from('applications')
+      .insert({
+        user_id: studentId,
+        type,
+        status: 'pending',
+        content
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error('提交申请失败');
+    }
+
+    return c.json({ success: true, application });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取申请记录
+const getApplications = async (c) => {
+  try {
+    const studentId = c.get('userProfile').id;
+    const { status, type } = c.req.query();
+
+    let query = supabaseService
+      .from('applications')
+      .select('*')
+      .eq('user_id', studentId);
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (type) {
+      query = query.eq('type', type);
+    }
+
+    const { data: applications, error } = await query.order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error('获取申请记录失败');
+    }
+
+    return c.json({ applications });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取同学列表
+const getClassmates = async (c) => {
+  try {
+    const studentId = c.get('userProfile').id;
+
+    // 获取当前学生的班级信息
+    const { data: currentStudent, error: studentError } = await supabaseService
+      .from('user_profiles')
+      .select('class_id')
+      .eq('id', studentId)
+      .single();
+
+    if (studentError || !currentStudent.class_id) {
+      throw new Error('获取班级信息失败');
+    }
+
+    // 获取同班同学
+    const { data: classmates, error } = await supabaseService
+      .from('user_profiles')
+      .select(`
+        id,
+        name,
+        student_id as student_number,
+        phone,
+        email
+      `)
+      .eq('class_id', currentStudent.class_id)
+      .eq('role_id', 4) // 只获取学生
+      .neq('id', studentId); // 排除自己
+
+    if (error) {
+      throw new Error('获取同学列表失败');
+    }
+
+    return c.json({ classmates });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
 export default {
   getDashboard,
   getAvailableCourses,
@@ -629,5 +779,9 @@ export default {
   changePassword,
   checkIn,
   getAttendanceRecords,
-  getRemainingHours
+  getRemainingHours,
+  getPaymentRecords,
+  submitApplication,
+  getApplications,
+  getClassmates
 };

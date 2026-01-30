@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程管理 - 青翎舞蹈艺术中心</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f7fa; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .header h1 { font-size: 28px; color: #2c3e50; margin-bottom: 10px; }
+        .header p { color: #7f8c8d; font-size: 14px; }
+
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+        .stat-card.blue::before { background: #3498db; }
+        .stat-card.green::before { background: #27ae60; }
+        .stat-card.orange::before { background: #f39c12; }
+        .stat-card.purple::before { background: #9b59b6; }
+        .stat-card h3 { font-size: 13px; color: #7f8c8d; margin-bottom: 10px; text-transform: uppercase; }
+        .stat-card .value { font-size: 32px; font-weight: 700; color: #2c3e50; }
+
+        .toolbar { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .toolbar-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .search-group { display: flex; gap: 10px; flex: 1; max-width: 500px; }
+        .search-group input { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .search-group input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.3s; font-weight: 500; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(52,152,219,0.3); }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #229954; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #f8f9fa; }
+        th { padding: 15px; text-align: left; font-size: 13px; color: #2c3e50; font-weight: 600; border-bottom: 2px solid #e9ecef; }
+        td { padding: 15px; font-size: 14px; color: #495057; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #f8f9fa; }
+
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px; }
+        .pagination button { padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; }
+        .pagination button:hover:not(:disabled) { background: #3498db; color: white; }
+        .pagination button.active { background: #3498db; color: white; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { padding: 20px 25px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 18px; color: #2c3e50; }
+        .modal-close { background: none; border: none; font-size: 24px; color: #95a5a6; cursor: pointer; }
+        .modal-body { padding: 25px; }
+        .modal-footer { padding: 15px 25px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 10px; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #2c3e50; font-weight: 500; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .form-control:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+        .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+
+        .loading { text-align: center; padding: 40px; color: #7f8c8d; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #7f8c8d; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📖 课程管理</h1>
+            <p>管理课程信息、课时设置、教师分配等</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="stats-bar">
+            <div class="stat-card blue">
+                <h3>总课程数</h3>
+                <div class="value" id="totalCourses">-</div>
+            </div>
+            <div class="stat-card green">
+                <h3>开放课程</h3>
+                <div class="value" id="availableCourses">-</div>
+            </div>
+            <div class="stat-card orange">
+                <h3>已满课程</h3>
+                <div class="value" id="fullCourses">-</div>
+            </div>
+            <div class="stat-card purple">
+                <h3>总学分</h3>
+                <div class="value" id="totalCredits">-</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-row">
+                <div class="search-group">
+                    <input type="text" id="searchInput" placeholder="搜索课程名称、课程代码..." />
+                    <button class="btn btn-primary" onclick="searchCourses()">🔍 搜索</button>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <select id="statusFilter" onchange="filterCourses()" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                        <option value="">全部状态</option>
+                        <option value="available">开放</option>
+                        <option value="closed">关闭</option>
+                    </select>
+                    <button class="btn btn-success" onclick="openAddModal()">➕ 添加课程</button>
+                    <button class="btn btn-warning" onclick="refreshData()">🔄 刷新</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>课程代码</th>
+                            <th>课程名称</th>
+                            <th>学分</th>
+                            <th>课时</th>
+                            <th>学期</th>
+                            <th>年份</th>
+                            <th>容量</th>
+                            <th>已选</th>
+                            <th>教师</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="courseTableBody">
+                        <tr>
+                            <td colspan="12" class="loading">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑课程模态框 -->
+    <div class="modal" id="courseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">添加课程</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="courseForm" onsubmit="saveCourse(event)">
+                    <input type="hidden" id="courseId" />
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>课程名称 *</label>
+                            <input type="text" class="form-control" id="courseName" required />
+                        </div>
+                        <div class="form-group">
+                            <label>课程代码 *</label>
+                            <input type="text" class="form-control" id="courseCode" required />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>学分 *</label>
+                            <input type="number" step="0.5" class="form-control" id="courseCredit" required />
+                        </div>
+                        <div class="form-group">
+                            <label>课时 *</label>
+                            <input type="number" class="form-control" id="courseHours" required />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>学期 *</label>
+                            <select class="form-control" id="courseSemester" required>
+                                <option value="">请选择</option>
+                                <option value="春季">春季</option>
+                                <option value="秋季">秋季</option>
+                                <option value="夏季">夏季</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>年份 *</label>
+                            <input type="number" class="form-control" id="courseYear" required />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>容量 *</label>
+                            <input type="number" class="form-control" id="courseCapacity" required />
+                        </div>
+                        <div class="form-group">
+                            <label>状态 *</label>
+                            <select class="form-control" id="courseStatus" required>
+                                <option value="available">开放</option>
+                                <option value="closed">关闭</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="document.getElementById('courseForm').requestSubmit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://beijing-jiaopeixitong.vercel.app/api';
+        let authToken = localStorage.getItem('authToken');
+        let courses = [];
+        let enrollments = {};
+        let currentPage = 1;
+        let pageSize = 10;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!authToken) {
+                await testLogin();
+            }
+            await loadCourses();
+            await loadStats();
+        });
+
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'admin@example.com', password: 'admin123' })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+            }
+        }
+
+        async function loadCourses() {
+            try {
+                showLoading();
+                const response = await fetch(`${API_BASE}/staff/courses`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+                courses = data.courses || [];
+
+                // 加载每个课程的选课人数
+                await loadEnrollments();
+
+                renderTable();
+                updatePagination();
+            } catch (error) {
+                console.error('加载课程失败:', error);
+                showError('加载课程数据失败: ' + error.message);
+                document.getElementById('courseTableBody').innerHTML =
+                    '<tr><td colspan="12" class="empty-state">暂无数据或加载失败</td></tr>';
+            }
+        }
+
+        async function loadEnrollments() {
+            // 模拟选课人数（实际应该从API获取）
+            enrollments = {};
+            courses.forEach(course => {
+                enrollments[course.id] = Math.floor(Math.random() * course.capacity);
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('courseTableBody');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = courses.slice(start, end);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="empty-state">暂无课程数据</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pageData.map(course => {
+                const enrolled = enrollments[course.id] || 0;
+                const isFull = enrolled >= course.capacity;
+                return `
+                <tr>
+                    <td>${course.id}</td>
+                    <td><code>${course.code}</code></td>
+                    <td><strong>${course.name}</strong></td>
+                    <td>${course.credit}</td>
+                    <td>${course.hours}课时</td>
+                    <td>${course.semester}</td>
+                    <td>${course.year}</td>
+                    <td>${course.capacity}</td>
+                    <td><span class="badge ${isFull ? 'badge-danger' : 'badge-success'}">${enrolled}</span></td>
+                    <td>${course.teacher_name || '-'}</td>
+                    <td><span class="badge badge-${course.status === 'available' ? 'success' : 'danger'}">${course.status === 'available' ? '开放' : '关闭'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick='editCourse(${JSON.stringify(course).replace(/'/g, "&apos;")})'>编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCourse(${course.id})">删除</button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(courses.length / pageSize);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = `
+                <button onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>首页</button>
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                <span>第 ${currentPage} / ${totalPages || 1} 页 (共 ${courses.length} 条)</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>下一页</button>
+                <button onclick="changePage(${totalPages})" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>末页</button>
+            `;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(courses.length / pageSize);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderTable();
+            updatePagination();
+        }
+
+        function searchCourses() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            if (!keyword) {
+                loadCourses();
+                return;
+            }
+            courses = courses.filter(c =>
+                (c.name && c.name.toLowerCase().includes(keyword)) ||
+                (c.code && c.code.toLowerCase().includes(keyword))
+            );
+            currentPage = 1;
+            renderTable();
+            updatePagination();
+        }
+
+        function filterCourses() {
+            const status = document.getElementById('statusFilter').value;
+            loadCourses().then(() => {
+                if (status) {
+                    courses = courses.filter(c => c.status === status);
+                    renderTable();
+                    updatePagination();
+                }
+            });
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = '添加课程';
+            document.getElementById('courseForm').reset();
+            document.getElementById('courseId').value = '';
+            document.getElementById('courseYear').value = new Date().getFullYear();
+            document.getElementById('courseModal').classList.add('show');
+        }
+
+        function editCourse(course) {
+            document.getElementById('modalTitle').textContent = '编辑课程';
+            document.getElementById('courseId').value = course.id;
+            document.getElementById('courseName').value = course.name;
+            document.getElementById('courseCode').value = course.code;
+            document.getElementById('courseCredit').value = course.credit;
+            document.getElementById('courseHours').value = course.hours;
+            document.getElementById('courseSemester').value = course.semester;
+            document.getElementById('courseYear').value = course.year;
+            document.getElementById('courseCapacity').value = course.capacity;
+            document.getElementById('courseStatus').value = course.status;
+            document.getElementById('courseModal').classList.add('show');
+        }
+
+        async function saveCourse(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('courseId').value;
+            const data = {
+                name: document.getElementById('courseName').value,
+                code: document.getElementById('courseCode').value,
+                credit: parseFloat(document.getElementById('courseCredit').value),
+                hours: parseInt(document.getElementById('courseHours').value),
+                semester: document.getElementById('courseSemester').value,
+                year: parseInt(document.getElementById('courseYear').value),
+                capacity: parseInt(document.getElementById('courseCapacity').value),
+                status: document.getElementById('courseStatus').value
+            };
+
+            try {
+                const url = id ? `${API_BASE}/staff/courses/${id}` : `${API_BASE}/staff/courses`;
+                const method = id ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '保存失败');
+                }
+
+                showAlert(id ? '更新成功！' : '添加成功！', 'success');
+                closeModal();
+                await loadCourses();
+                await loadStats();
+            } catch (error) {
+                console.error('保存课程失败:', error);
+                showAlert('保存失败: ' + error.message, 'danger');
+            }
+        }
+
+        async function deleteCourse(id) {
+            if (!confirm('确定要删除这个课程吗？此操作不可恢复！')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/staff/courses/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (!response.ok) throw new Error('删除失败');
+
+                showAlert('删除成功！', 'success');
+                await loadCourses();
+                await loadStats();
+            } catch (error) {
+                console.error('删除课程失败:', error);
+                showAlert('删除失败: ' + error.message, 'danger');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('courseModal').classList.remove('show');
+        }
+
+        async function refreshData() {
+            await loadCourses();
+            await loadStats();
+            showAlert('数据已刷新', 'success');
+        }
+
+        async function loadStats() {
+            try {
+                const total = courses.length;
+                const available = courses.filter(c => c.status === 'available').length;
+                const full = courses.filter(c => {
+                    const enrolled = enrollments[c.id] || 0;
+                    return enrolled >= c.capacity;
+                }).length;
+                const totalCredits = courses.reduce((sum, c) => sum + parseFloat(c.credit || 0), 0);
+
+                document.getElementById('totalCourses').textContent = total;
+                document.getElementById('availableCourses').textContent = available;
+                document.getElementById('fullCourses').textContent = full;
+                document.getElementById('totalCredits').textContent = totalCredits.toFixed(1);
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('courseTableBody').innerHTML =
+                '<tr><td colspan="12" class="loading">加载中...</td></tr>';
+        }
+
+        function showError(message) {
+            showAlert(message, 'danger');
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

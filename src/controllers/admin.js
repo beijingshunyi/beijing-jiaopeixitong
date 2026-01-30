@@ -402,6 +402,498 @@ const getSystemStats = async (c) => {
   }
 };
 
+// 系统设置功能
+
+// 获取系统设置
+const getSystemSettings = async (c) => {
+  try {
+    const { data: settings, error } = await supabaseService
+      .from('system_settings')
+      .select('*')
+      .single();
+
+    if (error) {
+      // 如果设置不存在，返回默认设置
+      return c.json({
+        settings: {
+          system_name: '教培管理系统',
+          system_description: '专业的教育培训管理系统',
+          contact_email: 'contact@example.com',
+          contact_phone: '13800138000',
+          logo_url: '',
+          favicon_url: '',
+          enable_email_notifications: true,
+          enable_sms_notifications: false,
+          email_template: '默认邮件模板',
+          password_min_length: 8,
+          password_require_uppercase: true,
+          password_require_lowercase: true,
+          password_require_numbers: true,
+          password_require_symbols: false,
+          max_login_attempts: 5,
+          lockout_duration: 30,
+          file_upload_limit: 10,
+          allowed_file_types: 'jpg,png,pdf,doc,docx',
+          cache_duration: 3600,
+          maintenance_mode: false,
+          maintenance_message: '系统维护中，请稍后访问',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      });
+    }
+
+    return c.json({ settings });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 更新系统设置
+const updateSystemSettings = async (c) => {
+  try {
+    const settingsData = await c.req.json();
+
+    // 检查设置是否存在
+    const { data: existingSettings, error: checkError } = await supabaseService
+      .from('system_settings')
+      .select('id')
+      .single();
+
+    let result;
+    if (existingSettings) {
+      // 更新现有设置
+      result = await supabaseService
+        .from('system_settings')
+        .update({
+          ...settingsData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingSettings.id)
+        .select()
+        .single();
+    } else {
+      // 创建新设置
+      result = await supabaseService
+        .from('system_settings')
+        .insert({
+          ...settingsData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+    }
+
+    if (result.error) {
+      throw new Error('更新系统设置失败');
+    }
+
+    return c.json({ 
+      success: true, 
+      message: '系统设置更新成功',
+      settings: result.data 
+    });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取通知设置
+const getNotificationSettings = async (c) => {
+  try {
+    const { data: settings, error } = await supabaseService
+      .from('notification_settings')
+      .select('*')
+      .single();
+
+    if (error) {
+      // 如果设置不存在，返回默认设置
+      return c.json({
+        settings: {
+          enable_email: true,
+          enable_sms: false,
+          enable_push: false,
+          email_host: 'smtp.example.com',
+          email_port: 587,
+          email_username: 'noreply@example.com',
+          email_password: '',
+          email_from: 'noreply@example.com',
+          sms_api_key: '',
+          sms_api_secret: '',
+          sms_from: '',
+          notification_templates: {
+            welcome: '欢迎使用教培管理系统',
+            course_enrollment: '您已成功报名课程',
+            payment_confirmation: '缴费成功通知',
+            attendance_reminder: '考勤提醒',
+            grade_release: '成绩发布通知'
+          }
+        }
+      });
+    }
+
+    return c.json({ settings });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 更新通知设置
+const updateNotificationSettings = async (c) => {
+  try {
+    const settingsData = await c.req.json();
+
+    // 检查设置是否存在
+    const { data: existingSettings, error: checkError } = await supabaseService
+      .from('notification_settings')
+      .select('id')
+      .single();
+
+    let result;
+    if (existingSettings) {
+      // 更新现有设置
+      result = await supabaseService
+        .from('notification_settings')
+        .update({
+          ...settingsData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingSettings.id)
+        .select()
+        .single();
+    } else {
+      // 创建新设置
+      result = await supabaseService
+        .from('notification_settings')
+        .insert({
+          ...settingsData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+    }
+
+    if (result.error) {
+      throw new Error('更新通知设置失败');
+    }
+
+    return c.json({ 
+      success: true, 
+      message: '通知设置更新成功',
+      settings: result.data 
+    });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取安全设置
+const getSecuritySettings = async (c) => {
+  try {
+    const { data: settings, error } = await supabaseService
+      .from('security_settings')
+      .select('*')
+      .single();
+
+    if (error) {
+      // 如果设置不存在，返回默认设置
+      return c.json({
+        settings: {
+          password_min_length: 8,
+          password_require_uppercase: true,
+          password_require_lowercase: true,
+          password_require_numbers: true,
+          password_require_symbols: false,
+          password_expiry_days: 90,
+          max_login_attempts: 5,
+          lockout_duration: 30,
+          session_timeout: 3600,
+          enable_2fa: false,
+          allowed_ip_ranges: '',
+          enable_ssl: true,
+          cors_origins: '*',
+          rate_limit_enabled: true,
+          rate_limit_requests: 100,
+          rate_limit_window: 60
+        }
+      });
+    }
+
+    return c.json({ settings });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 更新安全设置
+const updateSecuritySettings = async (c) => {
+  try {
+    const settingsData = await c.req.json();
+
+    // 检查设置是否存在
+    const { data: existingSettings, error: checkError } = await supabaseService
+      .from('security_settings')
+      .select('id')
+      .single();
+
+    let result;
+    if (existingSettings) {
+      // 更新现有设置
+      result = await supabaseService
+        .from('security_settings')
+        .update({
+          ...settingsData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingSettings.id)
+        .select()
+        .single();
+    } else {
+      // 创建新设置
+      result = await supabaseService
+        .from('security_settings')
+        .insert({
+          ...settingsData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+    }
+
+    if (result.error) {
+      throw new Error('更新安全设置失败');
+    }
+
+    // 记录系统日志
+    await logSystemEvent(c, 'security_settings_updated', `安全设置已更新`, { 
+      changes: Object.keys(settingsData) 
+    });
+
+    return c.json({ 
+      success: true, 
+      message: '安全设置更新成功',
+      settings: result.data 
+    });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 系统日志和审计功能
+
+// 记录系统事件
+const logSystemEvent = async (c, eventType, description, metadata = {}) => {
+  try {
+    const userId = c.get('userProfile')?.id;
+    const userIp = c.req.header('x-forwarded-for') || c.req.header('remote-addr') || 'unknown';
+    const userAgent = c.req.header('user-agent') || 'unknown';
+
+    await supabaseService
+      .from('system_logs')
+      .insert({
+        event_type: eventType,
+        description: description,
+        user_id: userId,
+        ip_address: userIp,
+        user_agent: userAgent,
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      });
+  } catch (error) {
+    console.error('记录系统日志失败:', error);
+  }
+};
+
+// 获取系统日志
+const getSystemLogs = async (c) => {
+  try {
+    const { eventType, userId, startDate, endDate, page = 1, limit = 20 } = c.req.query();
+
+    let query = supabaseService
+      .from('system_logs')
+      .select(`
+        id,
+        event_type,
+        description,
+        user_id,
+        ip_address,
+        user_agent,
+        metadata,
+        created_at,
+        user_profiles(name, email) as user
+      `, { count: 'exact' });
+
+    if (eventType) {
+      query = query.eq('event_type', eventType);
+    }
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data: logs, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      throw new Error('获取系统日志失败');
+    }
+
+    return c.json({
+      logs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取审计日志
+const getAuditLogs = async (c) => {
+  try {
+    const { actionType, resourceType, userId, startDate, endDate, page = 1, limit = 20 } = c.req.query();
+
+    let query = supabaseService
+      .from('audit_logs')
+      .select(`
+        id,
+        action_type,
+        resource_type,
+        resource_id,
+        user_id,
+        ip_address,
+        user_agent,
+        before_data,
+        after_data,
+        created_at,
+        user_profiles(name, email) as user
+      `, { count: 'exact' });
+
+    if (actionType) {
+      query = query.eq('action_type', actionType);
+    }
+
+    if (resourceType) {
+      query = query.eq('resource_type', resourceType);
+    }
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data: logs, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      throw new Error('获取审计日志失败');
+    }
+
+    return c.json({
+      logs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 清理系统日志
+const cleanupSystemLogs = async (c) => {
+  try {
+    const { daysToKeep = 30 } = await c.req.json();
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+
+    const { error } = await supabaseService
+      .from('system_logs')
+      .delete()
+      .lt('created_at', cutoffDate.toISOString());
+
+    if (error) {
+      throw new Error('清理系统日志失败');
+    }
+
+    return c.json({ 
+      success: true, 
+      message: `成功清理 ${daysToKeep} 天前的系统日志` 
+    });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取系统活动统计
+const getSystemActivityStats = async (c) => {
+  try {
+    const { startDate, endDate } = c.req.query();
+
+    let query = supabaseService
+      .from('system_logs')
+      .select('event_type, COUNT(*) as count')
+      .group('event_type');
+
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
+
+    const { data: stats, error } = await query;
+
+    if (error) {
+      throw new Error('获取系统活动统计失败');
+    }
+
+    const activityStats = {};
+    stats.forEach(stat => {
+      activityStats[stat.event_type] = stat.count;
+    });
+
+    return c.json({ stats: activityStats });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
 export default {
   // 用户管理
   getAllUsers,
@@ -422,5 +914,19 @@ export default {
   removeRole,
   
   // 系统统计
-  getSystemStats
+  getSystemStats,
+  
+  // 系统设置
+  getSystemSettings,
+  updateSystemSettings,
+  getNotificationSettings,
+  updateNotificationSettings,
+  getSecuritySettings,
+  updateSecuritySettings,
+  
+  // 系统日志和审计
+  getSystemLogs,
+  getAuditLogs,
+  cleanupSystemLogs,
+  getSystemActivityStats
 };

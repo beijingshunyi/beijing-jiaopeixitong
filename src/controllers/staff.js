@@ -687,6 +687,896 @@ const getEvaluations = async (c) => {
   }
 };
 
+// 课程管理
+
+// 获取课程列表
+const getCourses = async (c) => {
+  try {
+    const { collegeId, teacherId, status, semester, year } = c.req.query();
+
+    let query = supabaseService
+      .from('courses')
+      .select(`
+        id,
+        name,
+        code,
+        credit,
+        hours,
+        semester,
+        year,
+        capacity,
+        status,
+        colleges(name) as college,
+        user_profiles(name) as teacher
+      `);
+
+    if (collegeId) {
+      query = query.eq('college_id', collegeId);
+    }
+
+    if (teacherId) {
+      query = query.eq('teacher_id', teacherId);
+    }
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (semester) {
+      query = query.eq('semester', semester);
+    }
+
+    if (year) {
+      query = query.eq('year', year);
+    }
+
+    const { data: courses, error } = await query;
+
+    if (error) {
+      throw new Error('获取课程列表失败');
+    }
+
+    return c.json({ courses });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 创建课程
+const createCourse = async (c) => {
+  try {
+    const courseData = await c.req.json();
+
+    const { data: course, error } = await supabaseService
+      .from('courses')
+      .insert({
+        name: courseData.name,
+        code: courseData.code,
+        credit: courseData.credit,
+        hours: courseData.hours,
+        college_id: courseData.college_id,
+        teacher_id: courseData.teacher_id,
+        semester: courseData.semester,
+        year: courseData.year,
+        capacity: courseData.capacity,
+        status: courseData.status || 'available'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error('创建课程失败');
+    }
+
+    return c.json({ course }, 201);
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 更新课程
+const updateCourse = async (c) => {
+  try {
+    const { id } = c.req.param();
+    const courseData = await c.req.json();
+
+    const { data: course, error } = await supabaseService
+      .from('courses')
+      .update({
+        name: courseData.name,
+        code: courseData.code,
+        credit: courseData.credit,
+        hours: courseData.hours,
+        college_id: courseData.college_id,
+        teacher_id: courseData.teacher_id,
+        semester: courseData.semester,
+        year: courseData.year,
+        capacity: courseData.capacity,
+        status: courseData.status,
+        updated_at: new Date()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error('更新课程失败');
+    }
+
+    return c.json({ course });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 删除课程
+const deleteCourse = async (c) => {
+  try {
+    const { id } = c.req.param();
+
+    // 检查是否有学生选课
+    const { data: selections, error: selectionError } = await supabaseService
+      .from('course_selections')
+      .select('id')
+      .eq('course_id', id);
+
+    if (selectionError) {
+      throw new Error('检查课程选课情况失败');
+    }
+
+    if (selections.length > 0) {
+      throw new Error('该课程已有学生选课，无法删除');
+    }
+
+    const { error } = await supabaseService
+      .from('courses')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error('删除课程失败');
+    }
+
+    return c.json({ success: true, message: '课程删除成功' });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取课程详情
+const getCourseDetail = async (c) => {
+  try {
+    const { id } = c.req.param();
+
+    const { data: course, error } = await supabaseService
+      .from('courses')
+      .select(`
+        id,
+        name,
+        code,
+        credit,
+        hours,
+        semester,
+        year,
+        capacity,
+        status,
+        colleges(name) as college,
+        user_profiles(name, teacher_id as teacher_number) as teacher,
+        created_at,
+        updated_at
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error || !course) {
+      throw new Error('课程不存在');
+    }
+
+    return c.json({ course });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 更新课程状态
+const updateCourseStatus = async (c) => {
+  try {
+    const { id } = c.req.param();
+    const { status } = await c.req.json();
+
+    // 验证状态值
+    const validStatuses = ['available', 'closed'];
+    if (!validStatuses.includes(status)) {
+      throw new Error('无效的课程状态');
+    }
+
+    const { data: course, error } = await supabaseService
+      .from('courses')
+      .update({ 
+        status, 
+        updated_at: new Date() 
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error('更新课程状态失败');
+    }
+
+    return c.json({ course });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 考勤管理
+
+// 获取考勤记录
+const getAttendanceRecords = async (c) => {
+  try {
+    const { studentId, courseId, status, startDate, endDate } = c.req.query();
+
+    let query = supabaseService
+      .from('attendance')
+      .select(`
+        id,
+        date,
+        time,
+        status,
+        location,
+        user_profiles(name, student_id as student_number) as student,
+        courses(name, code) as course
+      `);
+
+    if (studentId) {
+      query = query.eq('student_id', studentId);
+    }
+
+    if (courseId) {
+      query = query.eq('course_id', courseId);
+    }
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
+
+    const { data: records, error } = await query.order('date', { ascending: false });
+
+    if (error) {
+      throw new Error('获取考勤记录失败');
+    }
+
+    return c.json({ records });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 更新考勤状态
+const updateAttendanceStatus = async (c) => {
+  try {
+    const { id } = c.req.param();
+    const { status } = await c.req.json();
+
+    // 验证状态值
+    const validStatuses = ['present', 'absent', 'late'];
+    if (!validStatuses.includes(status)) {
+      throw new Error('无效的考勤状态');
+    }
+
+    const { data: record, error } = await supabaseService
+      .from('attendance')
+      .update({ 
+        status, 
+        updated_at: new Date() 
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error('更新考勤状态失败');
+    }
+
+    return c.json({ record });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取考勤统计
+const getAttendanceStatistics = async (c) => {
+  try {
+    const { courseId, startDate, endDate } = c.req.query();
+
+    let query = supabaseService
+      .from('attendance')
+      .select('status, count(*) as count')
+      .group('status');
+
+    if (courseId) {
+      query = query.eq('course_id', courseId);
+    }
+
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
+
+    const { data: stats, error } = await query;
+
+    if (error) {
+      throw new Error('获取考勤统计失败');
+    }
+
+    // 计算总记录数和出勤率
+    const total = stats.reduce((sum, item) => sum + parseInt(item.count), 0);
+    const presentCount = stats.find(item => item.status === 'present')?.count || 0;
+    const attendanceRate = total > 0 ? ((parseInt(presentCount) / total) * 100).toFixed(2) : '0.00';
+
+    // 格式化统计数据
+    const formattedStats = {
+      total,
+      attendanceRate,
+      breakdown: {
+        present: parseInt(stats.find(item => item.status === 'present')?.count || 0),
+        absent: parseInt(stats.find(item => item.status === 'absent')?.count || 0),
+        late: parseInt(stats.find(item => item.status === 'late')?.count || 0)
+      }
+    };
+
+    return c.json({ stats: formattedStats });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取课程考勤
+const getCourseAttendance = async (c) => {
+  try {
+    const { courseId } = c.req.param();
+    const { startDate, endDate } = c.req.query();
+
+    let query = supabaseService
+      .from('attendance')
+      .select(`
+        id,
+        date,
+        time,
+        status,
+        user_profiles(name, student_id as student_number) as student
+      `)
+      .eq('course_id', courseId);
+
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
+
+    const { data: records, error } = await query.order('date', { ascending: false });
+
+    if (error) {
+      throw new Error('获取课程考勤失败');
+    }
+
+    return c.json({ records });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 导出考勤记录
+const exportAttendanceRecords = async (c) => {
+  try {
+    const { courseId, startDate, endDate } = c.req.query();
+
+    let query = supabaseService
+      .from('attendance')
+      .select(`
+        date,
+        time,
+        status,
+        location,
+        user_profiles(name, student_id as student_number) as student,
+        courses(name, code) as course
+      `);
+
+    if (courseId) {
+      query = query.eq('course_id', courseId);
+    }
+
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
+
+    const { data: records, error } = await query.order('date', { ascending: true });
+
+    if (error) {
+      throw new Error('获取考勤记录失败');
+    }
+
+    // 生成CSV格式数据
+    const headers = ['日期', '时间', '学生姓名', '学号', '课程名称', '课程代码', '考勤状态', '打卡位置'];
+    const csvRows = [
+      headers.join(','),
+      ...records.map(record => [
+        record.date,
+        record.time,
+        record.student.name,
+        record.student.student_number || '',
+        record.course.name,
+        record.course.code,
+        record.status === 'present' ? '出勤' : record.status === 'absent' ? '缺勤' : '迟到',
+        record.location || ''
+      ].map(field => `"${field}"`).join(','))
+    ];
+
+    const csvContent = csvRows.join('\n');
+    const fileName = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+
+    c.header('Content-Type', 'text/csv');
+    c.header('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    return c.text(csvContent);
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 统计报表功能
+
+// 获取学生统计报表
+const getStudentStatistics = async (c) => {
+  try {
+    const { startDate, endDate, collegeId, majorId } = c.req.query();
+
+    // 1. 学生总数统计
+    let studentQuery = supabaseService
+      .from('user_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role_id', 4); // 学生角色ID
+
+    if (collegeId) {
+      studentQuery = studentQuery.eq('college_id', collegeId);
+    }
+
+    if (majorId) {
+      studentQuery = studentQuery.eq('major_id', majorId);
+    }
+
+    const { count: totalStudents } = await studentQuery;
+
+    // 2. 学生报名统计
+    let enrollmentQuery = supabaseService
+      .from('course_selections')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'enrolled');
+
+    if (startDate) {
+      enrollmentQuery = enrollmentQuery.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      enrollmentQuery = enrollmentQuery.lte('created_at', endDate);
+    }
+
+    const { count: totalEnrollments } = await enrollmentQuery;
+
+    // 3. 学生出勤统计
+    let attendanceQuery = supabaseService
+      .from('attendance')
+      .select('status, count(*) as count')
+      .group('status');
+
+    if (startDate) {
+      attendanceQuery = attendanceQuery.gte('date', startDate);
+    }
+
+    if (endDate) {
+      attendanceQuery = attendanceQuery.lte('date', endDate);
+    }
+
+    const { data: attendanceStats } = await attendanceQuery;
+
+    // 4. 学生缴费统计
+    let paymentQuery = supabaseService
+      .from('payments')
+      .select('amount, status');
+
+    if (startDate) {
+      paymentQuery = paymentQuery.gte('payment_date', startDate);
+    }
+
+    if (endDate) {
+      paymentQuery = paymentQuery.lte('payment_date', endDate);
+    }
+
+    const { data: payments } = await paymentQuery;
+
+    // 5. 学生成绩统计
+    let gradeQuery = supabaseService
+      .from('grades')
+      .select('score');
+
+    if (startDate) {
+      gradeQuery = gradeQuery.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      gradeQuery = gradeQuery.lte('created_at', endDate);
+    }
+
+    const { data: grades } = await gradeQuery;
+
+    // 计算统计数据
+    const attendanceBreakdown = {
+      present: 0,
+      absent: 0,
+      late: 0
+    };
+
+    attendanceStats.forEach(stat => {
+      if (stat.status === 'present') attendanceBreakdown.present = parseInt(stat.count);
+      if (stat.status === 'absent') attendanceBreakdown.absent = parseInt(stat.count);
+      if (stat.status === 'late') attendanceBreakdown.late = parseInt(stat.count);
+    });
+
+    const totalAttendance = Object.values(attendanceBreakdown).reduce((sum, val) => sum + val, 0);
+    const attendanceRate = totalAttendance > 0 ? ((attendanceBreakdown.present / totalAttendance) * 100).toFixed(2) : '0.00';
+
+    let totalPayments = 0;
+    let completedPayments = 0;
+    payments.forEach(payment => {
+      totalPayments += parseFloat(payment.amount);
+      if (payment.status === 'completed') {
+        completedPayments += parseFloat(payment.amount);
+      }
+    });
+
+    let averageScore = 0;
+    if (grades && grades.length > 0) {
+      const totalScore = grades.reduce((sum, grade) => sum + parseFloat(grade.score || 0), 0);
+      averageScore = (totalScore / grades.length).toFixed(2);
+    }
+
+    const statistics = {
+      studentCount: totalStudents || 0,
+      enrollmentCount: totalEnrollments || 0,
+      attendance: {
+        total: totalAttendance,
+        rate: attendanceRate,
+        breakdown: attendanceBreakdown
+      },
+      payments: {
+        total: totalPayments.toFixed(2),
+        completed: completedPayments.toFixed(2),
+        completionRate: totalPayments > 0 ? ((completedPayments / totalPayments) * 100).toFixed(2) : '0.00'
+      },
+      grades: {
+        average: averageScore,
+        count: grades ? grades.length : 0
+      }
+    };
+
+    return c.json({ statistics });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取课程统计报表
+const getCourseStatistics = async (c) => {
+  try {
+    const { startDate, endDate, collegeId, teacherId } = c.req.query();
+
+    // 1. 课程总数统计
+    let courseQuery = supabaseService
+      .from('courses')
+      .select('id', { count: 'exact', head: true });
+
+    if (collegeId) {
+      courseQuery = courseQuery.eq('college_id', collegeId);
+    }
+
+    if (teacherId) {
+      courseQuery = courseQuery.eq('teacher_id', teacherId);
+    }
+
+    const { count: totalCourses } = await courseQuery;
+
+    // 2. 课程参与统计
+    let enrollmentQuery = supabaseService
+      .from('course_selections')
+      .select('course_id, count(*) as count')
+      .eq('status', 'enrolled')
+      .group('course_id');
+
+    if (startDate) {
+      enrollmentQuery = enrollmentQuery.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      enrollmentQuery = enrollmentQuery.lte('created_at', endDate);
+    }
+
+    const { data: enrollmentStats } = await enrollmentQuery;
+
+    // 3. 课程完成率统计
+    let completionQuery = supabaseService
+      .from('grades')
+      .select('course_id, count(*) as count')
+      .group('course_id');
+
+    if (startDate) {
+      completionQuery = completionQuery.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      completionQuery = completionQuery.lte('created_at', endDate);
+    }
+
+    const { data: completionStats } = await completionQuery;
+
+    // 4. 课程评价统计
+    let evaluationQuery = supabaseService
+      .from('evaluations')
+      .select('course_id, avg(score) as average_score, count(*) as count')
+      .group('course_id');
+
+    if (startDate) {
+      evaluationQuery = evaluationQuery.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      evaluationQuery = evaluationQuery.lte('created_at', endDate);
+    }
+
+    const { data: evaluationStats } = await evaluationQuery;
+
+    // 计算统计数据
+    const courseEnrollments = {};
+    enrollmentStats.forEach(stat => {
+      courseEnrollments[stat.course_id] = parseInt(stat.count);
+    });
+
+    const courseCompletions = {};
+    completionStats.forEach(stat => {
+      courseCompletions[stat.course_id] = parseInt(stat.count);
+    });
+
+    const courseEvaluations = {};
+    evaluationStats.forEach(stat => {
+      courseEvaluations[stat.course_id] = {
+        averageScore: parseFloat(stat.average_score).toFixed(2),
+        count: parseInt(stat.count)
+      };
+    });
+
+    let totalEnrollments = 0;
+    let totalCompletions = 0;
+    let totalEvaluationScore = 0;
+    let totalEvaluations = 0;
+
+    Object.values(courseEnrollments).forEach(count => {
+      totalEnrollments += count;
+    });
+
+    Object.values(courseCompletions).forEach(count => {
+      totalCompletions += count;
+    });
+
+    Object.values(courseEvaluations).forEach(evalData => {
+      totalEvaluationScore += parseFloat(evalData.averageScore);
+      totalEvaluations += evalData.count;
+    });
+
+    const completionRate = totalEnrollments > 0 ? ((totalCompletions / totalEnrollments) * 100).toFixed(2) : '0.00';
+    const averageEvaluationScore = totalEvaluations > 0 ? (totalEvaluationScore / Object.keys(courseEvaluations).length).toFixed(2) : '0.00';
+
+    const statistics = {
+      courseCount: totalCourses || 0,
+      totalEnrollments,
+      totalCompletions,
+      completionRate,
+      averageEvaluationScore,
+      enrollmentPerCourse: totalCourses > 0 ? (totalEnrollments / totalCourses).toFixed(2) : '0.00',
+      evaluationCount: totalEvaluations
+    };
+
+    return c.json({ statistics });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 获取教师统计报表
+const getTeacherStatistics = async (c) => {
+  try {
+    const { startDate, endDate, collegeId } = c.req.query();
+
+    // 1. 教师总数统计
+    let teacherQuery = supabaseService
+      .from('user_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role_id', 3); // 教师角色ID
+
+    if (collegeId) {
+      teacherQuery = teacherQuery.eq('college_id', collegeId);
+    }
+
+    const { count: totalTeachers } = await teacherQuery;
+
+    // 2. 教师授课统计
+    let courseQuery = supabaseService
+      .from('courses')
+      .select('teacher_id, hours');
+
+    if (collegeId) {
+      courseQuery = courseQuery.eq('college_id', collegeId);
+    }
+
+    if (startDate) {
+      courseQuery = courseQuery.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      courseQuery = courseQuery.lte('created_at', endDate);
+    }
+
+    const { data: courses } = await courseQuery;
+
+    // 3. 教师评价统计
+    let evaluationQuery = supabaseService
+      .from('evaluations')
+      .select('teacher_id, avg(score) as average_score, count(*) as count')
+      .group('teacher_id');
+
+    if (startDate) {
+      evaluationQuery = evaluationQuery.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      evaluationQuery = evaluationQuery.lte('created_at', endDate);
+    }
+
+    const { data: evaluationStats } = await evaluationQuery;
+
+    // 计算统计数据
+    const teachingHoursByTeacher = {};
+    const courseCountByTeacher = {};
+
+    courses.forEach(course => {
+      if (!teachingHoursByTeacher[course.teacher_id]) {
+        teachingHoursByTeacher[course.teacher_id] = 0;
+        courseCountByTeacher[course.teacher_id] = 0;
+      }
+      teachingHoursByTeacher[course.teacher_id] += parseFloat(course.hours);
+      courseCountByTeacher[course.teacher_id] += 1;
+    });
+
+    const evaluationByTeacher = {};
+
+    evaluationStats.forEach(stat => {
+      evaluationByTeacher[stat.teacher_id] = {
+        averageScore: parseFloat(stat.average_score).toFixed(2),
+        count: parseInt(stat.count)
+      };
+    });
+
+    let totalTeachingHours = 0;
+    let totalCourses = 0;
+    let totalEvaluationScore = 0;
+    let totalEvaluations = 0;
+
+    Object.values(teachingHoursByTeacher).forEach(hours => {
+      totalTeachingHours += hours;
+    });
+
+    Object.values(courseCountByTeacher).forEach(count => {
+      totalCourses += count;
+    });
+
+    Object.values(evaluationByTeacher).forEach(evalData => {
+      totalEvaluationScore += parseFloat(evalData.averageScore);
+      totalEvaluations += evalData.count;
+    });
+
+    const averageTeachingHours = totalTeachers > 0 ? (totalTeachingHours / totalTeachers).toFixed(2) : '0.00';
+    const averageCoursesPerTeacher = totalTeachers > 0 ? (totalCourses / totalTeachers).toFixed(2) : '0.00';
+    const averageEvaluationScore = totalTeachers > 0 ? (totalEvaluationScore / Object.keys(evaluationByTeacher).length).toFixed(2) : '0.00';
+
+    const statistics = {
+      teacherCount: totalTeachers || 0,
+      totalTeachingHours: totalTeachingHours.toFixed(2),
+      totalCourses,
+      totalEvaluations,
+      averageTeachingHours,
+      averageCoursesPerTeacher,
+      averageEvaluationScore
+    };
+
+    return c.json({ statistics });
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
+// 导出统计报表
+const exportStatisticsReport = async (c) => {
+  try {
+    const { reportType, startDate, endDate } = c.req.query();
+
+    let data, headers, fileName;
+
+    switch (reportType) {
+      case 'student':
+        // 获取学生统计数据
+        const studentStats = await getStudentStatistics(c);
+        data = studentStats._body.data.statistics;
+        headers = ['统计项', '数值'];
+        fileName = `student_statistics_${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+      case 'course':
+        // 获取课程统计数据
+        const courseStats = await getCourseStatistics(c);
+        data = courseStats._body.data.statistics;
+        headers = ['统计项', '数值'];
+        fileName = `course_statistics_${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+      case 'teacher':
+        // 获取教师统计数据
+        const teacherStats = await getTeacherStatistics(c);
+        data = teacherStats._body.data.statistics;
+        headers = ['统计项', '数值'];
+        fileName = `teacher_statistics_${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+      default:
+        throw new Error('无效的报表类型');
+    }
+
+    // 生成CSV数据
+    const csvRows = [
+      headers.join(','),
+      ...Object.entries(data).map(([key, value]) => {
+        if (typeof value === 'object') {
+          return Object.entries(value).map(([subKey, subValue]) => 
+            [`${key}_${subKey}`, subValue].map(field => `"${field}"`).join(',')
+          );
+        }
+        return [key, value].map(field => `"${field}"`).join(',');
+      }).flat()
+    ];
+
+    const csvContent = csvRows.join('\n');
+
+    c.header('Content-Type', 'text/csv');
+    c.header('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    return c.text(csvContent);
+  } catch (error) {
+    return c.json({ error: error.message }, 400);
+  }
+};
+
 export default {
   // 学院管理
   getColleges,
@@ -725,5 +1615,26 @@ export default {
   getStudents,
   
   // 评价管理
-  getEvaluations
+  getEvaluations,
+  
+  // 课程管理
+  getCourses,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  getCourseDetail,
+  updateCourseStatus,
+  
+  // 考勤管理
+  getAttendanceRecords,
+  updateAttendanceStatus,
+  getAttendanceStatistics,
+  getCourseAttendance,
+  exportAttendanceRecords,
+  
+  // 统计报表管理
+  getStudentStatistics,
+  getCourseStatistics,
+  getTeacherStatistics,
+  exportStatisticsReport
 };

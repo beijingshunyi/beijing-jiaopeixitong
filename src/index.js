@@ -103,6 +103,13 @@ try {
     app.post('/api/student/checkin', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.checkIn);
     app.get('/api/student/attendance', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getAttendanceRecords);
     app.get('/api/student/remaining-hours', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getRemainingHours);
+    // 缴费记录相关路由
+    app.get('/api/student/payments', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getPaymentRecords);
+    // 申请相关路由
+    app.post('/api/student/applications', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.submitApplication);
+    app.get('/api/student/applications', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getApplications);
+    // 同学列表
+    app.get('/api/student/classmates', authMiddleware, roleMiddleware([ROLES.STUDENT]), studentController.getClassmates);
     console.log('Student routes added');
     
     // 教师路由
@@ -154,8 +161,16 @@ try {
     // 课程管理
     app.get('/api/staff/courses', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getCourses);
     app.post('/api/staff/courses', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.createCourse);
+    app.get('/api/staff/courses/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getCourseDetail);
     app.put('/api/staff/courses/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.updateCourse);
     app.delete('/api/staff/courses/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.deleteCourse);
+    app.put('/api/staff/courses/:id/status', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.updateCourseStatus);
+    // 考勤管理
+    app.get('/api/staff/attendance', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getAttendanceRecords);
+    app.put('/api/staff/attendance/:id', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.updateAttendanceStatus);
+    app.get('/api/staff/attendance/statistics', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getAttendanceStatistics);
+    app.get('/api/staff/courses/:courseId/attendance', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.getCourseAttendance);
+    app.get('/api/staff/attendance/export', authMiddleware, roleMiddleware([ROLES.STAFF]), staffController.exportAttendanceRecords);
     console.log('Staff routes added');
     
     // Admin路由
@@ -184,12 +199,21 @@ try {
     // 财务统计
     app.get('/api/financial/stats', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getFinancialStats);
     app.get('/api/financial/monthly/:year/:month', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getMonthlyStats);
+    app.get('/api/financial/analysis', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getFinancialAnalysis);
     // 缴费管理
     app.post('/api/financial/payments', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.createPayment);
     app.get('/api/financial/payments', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getPayments);
+    app.put('/api/financial/payments/:id/status', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.updatePaymentStatus);
     // 退款管理
     app.post('/api/financial/refunds', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.processRefund);
     app.get('/api/financial/refunds', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getRefunds);
+    app.put('/api/financial/refunds/:id/status', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.updateRefundStatus);
+    // 支出管理
+    app.post('/api/financial/expenses', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.createExpense);
+    // 财务记录管理
+    app.get('/api/financial/records', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.getFinancialRecords);
+    app.put('/api/financial/records/:id', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.updateFinancialRecord);
+    app.delete('/api/financial/records/:id', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.deleteFinancialRecord);
     // 报表导出
     app.get('/api/financial/export', authMiddleware, roleMiddleware([ROLES.ADMIN, ROLES.STAFF]), financialController.exportFinancialReport);
     console.log('Financial routes added');

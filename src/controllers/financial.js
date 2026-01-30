@@ -437,6 +437,342 @@ const exportFinancialReport = async (c) => {
   }
 };
 
+// 创建支出记录
+const createExpense = async (c) => {
+  try {
+    const { category, amount, description, payment_method, reference_id, reference_type } = await c.req.json();
+    const userId = c.get('userProfile').id;
+
+    const { data: record, error } = await supabaseService
+      .from('financial_records')
+      .insert({
+        type: 'expense',
+        category,
+        amount,
+        description,
+        reference_id,
+        reference_type,
+        payment_method,
+        status: 'completed',
+        created_by: userId
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // 更新月度统计
+    await updateMonthlySummary();
+
+    return c.json({
+      success: true,
+      message: '支出记录创建成功',
+      data: record
+    });
+  } catch (error) {
+    console.error('创建支出记录失败:', error);
+    return c.json({
+      success: false,
+      message: '创建支出记录失败',
+      error: error.message
+    }, 500);
+  }
+};
+
+// 获取财务记录列表
+const getFinancialRecords = async (c) => {
+  try {
+    const { type, category, status, startDate, endDate, page = 1, limit = 20 } = c.req.query();
+
+    let query = supabaseService
+      .from('financial_records')
+      .select('*', { count: 'exact' });
+
+    if (type) {
+      query = query.eq('type', type);
+    }
+
+    if (category) {
+      query = query.eq('category', category);
+    }
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data: records, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+
+    return c.json({
+      success: true,
+      data: records,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('获取财务记录失败:', error);
+    return c.json({
+      success: false,
+      message: '获取财务记录失败',
+      error: error.message
+    }, 500);
+  }
+};
+
+// 更新财务记录
+const updateFinancialRecord = async (c) => {
+  try {
+    const { id } = c.req.param();
+    const { category, amount, description, status } = await c.req.json();
+    const userId = c.get('userProfile').id;
+
+    const { data: record, error } = await supabaseService
+      .from('financial_records')
+      .update({
+        category,
+        amount,
+        description,
+        status,
+        updated_at: new Date(),
+        created_by: userId
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // 更新月度统计
+    await updateMonthlySummary();
+
+    return c.json({
+      success: true,
+      message: '财务记录更新成功',
+      data: record
+    });
+  } catch (error) {
+    console.error('更新财务记录失败:', error);
+    return c.json({
+      success: false,
+      message: '更新财务记录失败',
+      error: error.message
+    }, 500);
+  }
+};
+
+// 删除财务记录
+const deleteFinancialRecord = async (c) => {
+  try {
+    const { id } = c.req.param();
+
+    const { error } = await supabaseService
+      .from('financial_records')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    // 更新月度统计
+    await updateMonthlySummary();
+
+    return c.json({
+      success: true,
+      message: '财务记录删除成功'
+    });
+  } catch (error) {
+    console.error('删除财务记录失败:', error);
+    return c.json({
+      success: false,
+      message: '删除财务记录失败',
+      error: error.message
+    }, 500);
+  }
+};
+
+// 获取详细的财务分析
+const getFinancialAnalysis = async (c) => {
+  try {
+    const { startDate, endDate, groupBy } = c.req.query();
+
+    let query = supabaseService
+      .from('financial_records')
+      .select('*');
+
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
+
+    const { data: records, error } = await query.order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // 计算基本统计
+    let totalIncome = 0;
+    let totalExpense = 0;
+    const incomeByCategory = {};
+    const expenseByCategory = {};
+    const recordsByDate = {};
+
+    records.forEach(record => {
+      if (record.type === 'income') {
+        totalIncome += parseFloat(record.amount);
+        incomeByCategory[record.category] = (incomeByCategory[record.category] || 0) + parseFloat(record.amount);
+      } else {
+        totalExpense += parseFloat(record.amount);
+        expenseByCategory[record.category] = (expenseByCategory[record.category] || 0) + parseFloat(record.amount);
+      }
+
+      // 按日期分组
+      const date = record.created_at.split('T')[0];
+      if (!recordsByDate[date]) {
+        recordsByDate[date] = { income: 0, expense: 0 };
+      }
+      if (record.type === 'income') {
+        recordsByDate[date].income += parseFloat(record.amount);
+      } else {
+        recordsByDate[date].expense += parseFloat(record.amount);
+      }
+    });
+
+    // 生成趋势数据
+    const trendData = Object.entries(recordsByDate).map(([date, amounts]) => ({
+      date,
+      income: amounts.income,
+      expense: amounts.expense,
+      net: amounts.income - amounts.expense
+    })).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    return c.json({
+      success: true,
+      data: {
+        totalIncome,
+        totalExpense,
+        netProfit: totalIncome - totalExpense,
+        incomeByCategory,
+        expenseByCategory,
+        trendData,
+        totalRecords: records.length
+      }
+    });
+  } catch (error) {
+    console.error('获取财务分析失败:', error);
+    return c.json({
+      success: false,
+      message: '获取财务分析失败',
+      error: error.message
+    }, 500);
+  }
+};
+
+// 处理缴费状态更新
+const updatePaymentStatus = async (c) => {
+  try {
+    const { id } = c.req.param();
+    const { status } = await c.req.json();
+    const userId = c.get('userProfile').id;
+
+    // 验证状态值
+    const validStatuses = ['pending', 'completed', 'cancelled', 'refunded'];
+    if (!validStatuses.includes(status)) {
+      return c.json({
+        success: false,
+        message: '无效的缴费状态'
+      }, 400);
+    }
+
+    const { data: payment, error } = await supabaseService
+      .from('payments')
+      .update({
+        status,
+        updated_at: new Date()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return c.json({
+      success: true,
+      message: '缴费状态更新成功',
+      data: payment
+    });
+  } catch (error) {
+    console.error('更新缴费状态失败:', error);
+    return c.json({
+      success: false,
+      message: '更新缴费状态失败',
+      error: error.message
+    }, 500);
+  }
+};
+
+// 处理退款状态更新
+const updateRefundStatus = async (c) => {
+  try {
+    const { id } = c.req.param();
+    const { status } = await c.req.json();
+    const userId = c.get('userProfile').id;
+
+    // 验证状态值
+    const validStatuses = ['pending', 'completed', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      return c.json({
+        success: false,
+        message: '无效的退款状态'
+      }, 400);
+    }
+
+    const { data: refund, error } = await supabaseService
+      .from('refunds')
+      .update({
+        status,
+        updated_at: new Date(),
+        processed_by: userId
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return c.json({
+      success: true,
+      message: '退款状态更新成功',
+      data: refund
+    });
+  } catch (error) {
+    console.error('更新退款状态失败:', error);
+    return c.json({
+      success: false,
+      message: '更新退款状态失败',
+      error: error.message
+    }, 500);
+  }
+};
+
 export default {
   getFinancialStats,
   getMonthlyStats,
@@ -444,5 +780,12 @@ export default {
   getPayments,
   processRefund,
   getRefunds,
-  exportFinancialReport
+  exportFinancialReport,
+  createExpense,
+  getFinancialRecords,
+  updateFinancialRecord,
+  deleteFinancialRecord,
+  getFinancialAnalysis,
+  updatePaymentStatus,
+  updateRefundStatus
 };

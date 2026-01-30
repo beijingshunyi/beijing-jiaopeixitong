@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考勤管理 - 青翎舞蹈艺术中心</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f7fa; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .header h1 { font-size: 28px; color: #2c3e50; margin-bottom: 10px; }
+        .header p { color: #7f8c8d; font-size: 14px; }
+
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+        .stat-card.blue::before { background: #3498db; }
+        .stat-card.green::before { background: #27ae60; }
+        .stat-card.orange::before { background: #f39c12; }
+        .stat-card.purple::before { background: #9b59b6; }
+        .stat-card h3 { font-size: 13px; color: #7f8c8d; margin-bottom: 10px; text-transform: uppercase; }
+        .stat-card .value { font-size: 32px; font-weight: 700; color: #2c3e50; }
+
+        .toolbar { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .toolbar-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .filter-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .filter-group input, .filter-group select { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.3s; font-weight: 500; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 25px; margin-bottom: 20px; }
+        .card h3 { font-size: 18px; color: #2c3e50; margin-bottom: 20px; }
+        .chart-container { position: relative; height: 300px; }
+
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #f8f9fa; }
+        th { padding: 15px; text-align: left; font-size: 13px; color: #2c3e50; font-weight: 600; border-bottom: 2px solid #e9ecef; }
+        td { padding: 15px; font-size: 14px; color: #495057; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #f8f9fa; }
+
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px; }
+        .pagination button { padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; }
+        .pagination button:hover:not(:disabled) { background: #3498db; color: white; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .loading { text-align: center; padding: 40px; color: #7f8c8d; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #7f8c8d; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+        .alert-info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ 考勤管理</h1>
+            <p>查看学员打卡记录、课时统计、出勤率分析</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="stats-bar">
+            <div class="stat-card blue">
+                <h3>今日打卡</h3>
+                <div class="value" id="todayCheckins">-</div>
+            </div>
+            <div class="stat-card green">
+                <h3>本周打卡</h3>
+                <div class="value" id="weekCheckins">-</div>
+            </div>
+            <div class="stat-card orange">
+                <h3>本月打卡</h3>
+                <div class="value" id="monthCheckins">-</div>
+            </div>
+            <div class="stat-card purple">
+                <h3>平均出勤率</h3>
+                <div class="value" id="avgAttendance">-</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📊 出勤趋势</h3>
+            <div class="chart-container">
+                <canvas id="attendanceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-row">
+                <div class="filter-group">
+                    <input type="date" id="startDate" />
+                    <span>至</span>
+                    <input type="date" id="endDate" />
+                    <select id="statusFilter">
+                        <option value="">全部状态</option>
+                        <option value="present">出勤</option>
+                        <option value="absent">缺勤</option>
+                        <option value="late">迟到</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="filterRecords()">筛选</button>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-warning" onclick="refreshData()">🔄 刷新</button>
+                    <button class="btn btn-success" onclick="exportData()">📥 导出</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>学员</th>
+                            <th>课程</th>
+                            <th>日期</th>
+                            <th>打卡时间</th>
+                            <th>状态</th>
+                            <th>位置</th>
+                            <th>剩余课时</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody">
+                        <tr>
+                            <td colspan="8" class="loading">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://beijing-jiaopeixitong.vercel.app/api';
+        let authToken = localStorage.getItem('authToken');
+        let attendanceRecords = [];
+        let currentPage = 1;
+        let pageSize = 15;
+        let attendanceChart = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!authToken) await testLogin();
+
+            // 设置默认日期范围（最近30天）
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            document.getElementById('endDate').valueAsDate = endDate;
+            document.getElementById('startDate').valueAsDate = startDate;
+
+            await loadAttendance();
+            await loadStats();
+            initChart();
+        });
+
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'admin@example.com', password: 'admin123' })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+            }
+        }
+
+        async function loadAttendance() {
+            try {
+                showLoading();
+
+                // 生成模拟数据（实际应该调用API）
+                attendanceRecords = generateMockAttendance(100);
+
+                renderTable();
+                updatePagination();
+            } catch (error) {
+                console.error('加载考勤失败:', error);
+                showError('加载考勤数据失败: ' + error.message);
+                document.getElementById('attendanceTableBody').innerHTML =
+                    '<tr><td colspan="8" class="empty-state">暂无数据</td></tr>';
+            }
+        }
+
+        function generateMockAttendance(count) {
+            const students = ['张三', '李四', '王五', '赵六', '钱七'];
+            const courses = ['芭蕾舞', '民族舞', '现代舞', '拉丁舞'];
+            const statuses = ['present', 'absent', 'late'];
+            const locations = ['教室A', '教室B', '教室C'];
+
+            return Array.from({ length: count }, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - Math.floor(i / 5));
+
+                return {
+                    id: i + 1,
+                    student_name: students[i % students.length],
+                    course_name: courses[i % courses.length],
+                    date: date.toISOString().split('T')[0],
+                    time: `${8 + (i % 12)}:${(i % 60).toString().padStart(2, '0')}`,
+                    status: statuses[i % 3],
+                    location: locations[i % locations.length],
+                    remaining_hours: 20 - (i % 20)
+                };
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('attendanceTableBody');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = attendanceRecords.slice(start, end);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">暂无考勤记录</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pageData.map(record => `
+                <tr>
+                    <td>${record.id}</td>
+                    <td><strong>${record.student_name}</strong></td>
+                    <td>${record.course_name}</td>
+                    <td>${record.date}</td>
+                    <td>${record.time}</td>
+                    <td><span class="badge badge-${getStatusBadge(record.status)}">${getStatusText(record.status)}</span></td>
+                    <td>${record.location}</td>
+                    <td>${record.remaining_hours}课时</td>
+                </tr>
+            `).join('');
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(attendanceRecords.length / pageSize);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = `
+                <button onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>首页</button>
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                <span>第 ${currentPage} / ${totalPages || 1} 页 (共 ${attendanceRecords.length} 条)</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>
+                <button onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末页</button>
+            `;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(attendanceRecords.length / pageSize);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderTable();
+            updatePagination();
+        }
+
+        function filterRecords() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const status = document.getElementById('statusFilter').value;
+
+            loadAttendance().then(() => {
+                attendanceRecords = attendanceRecords.filter(record => {
+                    const matchDate = (!startDate || record.date >= startDate) && (!endDate || record.date <= endDate);
+                    const matchStatus = !status || record.status === status;
+                    return matchDate && matchStatus;
+                });
+                currentPage = 1;
+                renderTable();
+                updatePagination();
+            });
+        }
+
+        async function refreshData() {
+            await loadAttendance();
+            await loadStats();
+            updateChart();
+            showAlert('数据已刷新', 'success');
+        }
+
+        function exportData() {
+            const csv = convertToCSV(attendanceRecords);
+            downloadCSV(csv, 'attendance.csv');
+            showAlert('导出成功！', 'success');
+        }
+
+        function convertToCSV(data) {
+            const headers = ['ID', '学员', '课程', '日期', '时间', '状态', '位置', '剩余课时'];
+            const rows = data.map(r => [
+                r.id, r.student_name, r.course_name, r.date, r.time,
+                getStatusText(r.status), r.location, r.remaining_hours
+            ]);
+            return [headers, ...rows].map(row => row.join(',')).join('\n');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        async function loadStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const monthAgo = new Date();
+            monthAgo.setDate(monthAgo.getDate() - 30);
+
+            const todayCount = attendanceRecords.filter(r => r.date === today).length;
+            const weekCount = attendanceRecords.filter(r => new Date(r.date) >= weekAgo).length;
+            const monthCount = attendanceRecords.filter(r => new Date(r.date) >= monthAgo).length;
+            const presentCount = attendanceRecords.filter(r => r.status === 'present').length;
+            const avgRate = attendanceRecords.length > 0 ? ((presentCount / attendanceRecords.length) * 100).toFixed(1) : 0;
+
+            document.getElementById('todayCheckins').textContent = todayCount;
+            document.getElementById('weekCheckins').textContent = weekCount;
+            document.getElementById('monthCheckins').textContent = monthCount;
+            document.getElementById('avgAttendance').textContent = avgRate + '%';
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            const last7Days = Array.from({ length: 7 }, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - (6 - i));
+                return date.toISOString().split('T')[0];
+            });
+
+            const data = last7Days.map(date => {
+                return attendanceRecords.filter(r => r.date === date && r.status === 'present').length;
+            });
+
+            attendanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: last7Days.map(d => d.substring(5)),
+                    datasets: [{
+                        label: '出勤人数',
+                        data: data,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (attendanceChart) {
+                const last7Days = Array.from({ length: 7 }, (_, i) => {
+                    const date = new Date();
+                    date.setDate(date.getDate() - (6 - i));
+                    return date.toISOString().split('T')[0];
+                });
+
+                const data = last7Days.map(date => {
+                    return attendanceRecords.filter(r => r.date === date && r.status === 'present').length;
+                });
+
+                attendanceChart.data.datasets[0].data = data;
+                attendanceChart.update();
+            }
+        }
+
+        function getStatusBadge(status) {
+            return { present: 'success', absent: 'danger', late: 'warning' }[status] || 'success';
+        }
+
+        function getStatusText(status) {
+            return { present: '出勤', absent: '缺勤', late: '迟到' }[status] || '未知';
+        }
+
+        function showLoading() {
+            document.getElementById('attendanceTableBody').innerHTML =
+                '<tr><td colspan="8" class="loading">加载中...</td></tr>';
+        }
+
+        function showError(message) {
+            showAlert(message, 'danger');
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
